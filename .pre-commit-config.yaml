@@ -1,0 +1,16 @@
+# Pre-commit hooks for this repository.
+#
+# Mandated (project.md, team.md Q13): a secret-scanning hook runs on staged diffs
+# before every commit, as the first of two layers (GitHub's own secret scanning,
+# push protection and Dependabot alerts are the second, enabled in the repository
+# settings). Install once per machine with:
+#
+#   brew install pre-commit gitleaks   # or: pip install pre-commit
+#   pre-commit install
+#
+# See README.md, "Repository hygiene".
+repos:
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.30.1
+    hooks:
+      - id: gitleaks

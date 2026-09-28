@@ -1,0 +1,118 @@
+{
+  "stage": "code-generation",
+  "unit": "reminder-unit",
+  "version": 1,
+  "writes": [
+    {
+      "path": "package.json"
+    },
+    {
+      "path": "package-lock.json"
+    },
+    {
+      "path": "README.md"
+    },
+    {
+      "path": "amplify/backend.ts"
+    },
+    {
+      "path": "amplify/data/resource.ts"
+    },
+    {
+      "path": "amplify/data/reminder-schema.test.ts"
+    },
+    {
+      "path": "amplify/functions/reminder-shared/constants.ts"
+    },
+    {
+      "path": "amplify/functions/reminder-shared/constants.test.ts"
+    },
+    {
+      "path": "amplify/functions/reminder-shared/types.ts"
+    },
+    {
+      "path": "amplify/functions/reminder-shared/errors.ts"
+    },
+    {
+      "path": "amplify/functions/reminder-shared/reminder-repository.ts"
+    },
+    {
+      "path": "amplify/functions/reminder-shared/reminder-repository.test.ts"
+    },
+    {
+      "path": "amplify/functions/reminder-shared/schedules-adapter.ts"
+    },
+    {
+      "path": "amplify/functions/reminder-shared/schedules-adapter.test.ts"
+    },
+    {
+      "path": "amplify/functions/reminder-shared/push-sender.ts"
+    },
+    {
+      "path": "amplify/functions/reminder-shared/push-sender.test.ts"
+    },
+    {
+      "path": "amplify/functions/reminder-shared/feed-client.ts"
+    },
+    {
+      "path": "amplify/functions/reminder-shared/feed-client.test.ts"
+    },
+    {
+      "path": "amplify/functions/reminder-shared/metrics.ts"
+    },
+    {
+      "path": "amplify/functions/reminder-shared/metrics.test.ts"
+    },
+    {
+      "path": "amplify/functions/reminder-shared/rules.ts"
+    },
+    {
+      "path": "amplify/functions/reminder-shared/rules.test.ts"
+    },
+    {
+      "path": "amplify/functions/reminder-shared/stream-events.ts"
+    },
+    {
+      "path": "amplify/functions/reminder-shared/stream-events.test.ts"
+    },
+    {
+      "path": "amplify/functions/reminder-shared/test-fakes.ts"
+    },
+    {
+      "path": "amplify/functions/reminder-api/resource.ts"
+    },
+    {
+      "path": "amplify/functions/reminder-api/handler.ts"
+    },
+    {
+      "path": "amplify/functions/reminder-api/handler.test.ts"
+    },
+    {
+      "path": "amplify/functions/reminder-stream-handler/resource.ts"
+    },
+    {
+      "path": "amplify/functions/reminder-stream-handler/handler.ts"
+    },
+    {
+      "path": "amplify/functions/reminder-stream-handler/handler.test.ts"
+    },
+    {
+      "path": "amplify/functions/deliver-push/resource.ts"
+    },
+    {
+      "path": "amplify/functions/deliver-push/handler.ts"
+    },
+    {
+      "path": "amplify/functions/deliver-push/handler.test.ts"
+    },
+    {
+      "path": "amplify/functions/auto-clear/resource.ts"
+    },
+    {
+      "path": "amplify/functions/auto-clear/handler.ts"
+    },
+    {
+      "path": "amplify/functions/auto-clear/handler.test.ts"
+    }
+  ]
+}

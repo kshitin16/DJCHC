@@ -1,0 +1,32 @@
+{
+  "stage": "infrastructure-design",
+  "unit": "suggestion-unit",
+  "upstream_ids": [
+    "NFR-PERF.1", "NFR-PERF.2",
+    "NFR2.1", "NFR2.2", "NFR2.3", "NFR2.4",
+    "NFR4.1",
+    "NFR-AUTHZ.1",
+    "NFR-RATE.1",
+    "NFR6.1",
+    "NFR-SC.1",
+    "NFR-OBS.1", "NFR-OBS.2", "NFR-OBS.3", "NFR-OBS.4", "NFR-OBS.5"
+  ],
+  "coverage": [
+    { "id": "NFR-PERF.1", "status": "OK", "target": "infrastructure-specification.md > Deployment > Resource sizing (submitSuggestion Lambda, 128MB/5s — re-corrected at this stage's review; a prior JS-pipeline-resolver design was found unachievable across two DynamoDB tables and replaced with a Lambda)" },
+    { "id": "NFR-PERF.2", "status": "OK", "target": "infrastructure-specification.md > Deployment > Resource sizing (allSuggestions Lambda, 256MB/30s); myPastSuggestions remains a direct resolver with no infra decision" },
+    { "id": "NFR2.1", "status": "OK", "target": "infrastructure-specification.md > Deployment > Region/Environments" },
+    { "id": "NFR2.2", "status": "N/A", "target": "No infrastructure decision — no resilience pattern beyond existing error+retry" },
+    { "id": "NFR2.3", "status": "OK", "target": "infrastructure-specification.md > Infrastructure Services > both DynamoDB tables (managed replication + encryption)" },
+    { "id": "NFR2.4", "status": "N/A", "target": "No infrastructure decision — no failover provisioned" },
+    { "id": "NFR4.1", "status": "OK", "target": "infrastructure-specification.md > Infrastructure Services > both DynamoDB tables (AWS-managed encryption)" },
+    { "id": "NFR-AUTHZ.1", "status": "N/A", "target": "No new infrastructure resource — declarative AppSync auth rules read the shared Cognito User Pool (Shared Infrastructure table), owned by auth-unit" },
+    { "id": "NFR-RATE.1", "status": "OK", "target": "infrastructure-specification.md > Infrastructure Services > SuggestionDailyCount table (TTL attribute enabled)" },
+    { "id": "NFR6.1", "status": "N/A", "target": "Process control (change-review trigger, access-boundary rule), not an infrastructure resource" },
+    { "id": "NFR-SC.1", "status": "OK", "target": "infrastructure-specification.md > Infrastructure Services > on-demand DynamoDB + auto-scaling allSuggestions Lambda" },
+    { "id": "NFR-OBS.1", "status": "OK", "target": "monitoring-design.md > Metrics & KPIs (suggestion-count metric via direct cloudwatch:PutMetricData from the submitSuggestion Lambda — re-corrected at this stage's review, now that submitSuggestion is Lambda-backed with full SDK access)" },
+    { "id": "NFR-OBS.2", "status": "OK", "target": "monitoring-design.md > Logs & Tracing (structured logging per existing spec)" },
+    { "id": "NFR-OBS.3", "status": "N/A", "target": "No tracing infrastructure — not applicable" },
+    { "id": "NFR-OBS.4", "status": "N/A", "target": "AppSync's own CloudWatch access logs (an API-level default already enabled via NFR-OBS.2's logging integration) — no separate infrastructure decision" },
+    { "id": "NFR-OBS.5", "status": "OK", "target": "monitoring-design.md > Alerts — explicitly none configured" }
+  ]
+}

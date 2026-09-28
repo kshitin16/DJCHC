@@ -1,0 +1,30 @@
+{
+  "stage": "infrastructure-design",
+  "unit": "feed-unit",
+  "upstream_ids": [
+    "NFR1.1", "NFR1.2", "NFR1.3",
+    "NFR2.1", "NFR2.2", "NFR2.3", "NFR2.4",
+    "NFR4.1",
+    "NFR-AUTHZ.1",
+    "NFR6.1",
+    "NFR-SC.1",
+    "NFR-OBS.1", "NFR-OBS.2", "NFR-OBS.3", "NFR-OBS.4"
+  ],
+  "coverage": [
+    { "id": "NFR1.1", "status": "N/A", "target": "No infrastructure decision — direct AppSync/DynamoDB resolver, no compute to size" },
+    { "id": "NFR1.2", "status": "N/A", "target": "No infrastructure decision — same direct resolver pattern as NFR1.1" },
+    { "id": "NFR1.3", "status": "N/A", "target": "No infrastructure decision — single-item DynamoDB write via a direct resolver" },
+    { "id": "NFR2.1", "status": "OK", "target": "infrastructure-specification.md > Deployment > Region/Environments" },
+    { "id": "NFR2.2", "status": "N/A", "target": "No infrastructure decision — no circuit breaker to provision" },
+    { "id": "NFR2.3", "status": "OK", "target": "infrastructure-specification.md > Infrastructure Services > Post DynamoDB table (managed replication + encryption); DynamoDB Streams' 24h retention is a fixed AWS characteristic backing Contract 8's delivery reliability" },
+    { "id": "NFR2.4", "status": "N/A", "target": "No infrastructure decision — no failover provisioned" },
+    { "id": "NFR4.1", "status": "OK", "target": "infrastructure-specification.md > Infrastructure Services > Post DynamoDB table (AWS-managed encryption)" },
+    { "id": "NFR-AUTHZ.1", "status": "N/A", "target": "No new infrastructure resource — resolver-level cognito:groups check reads the shared Cognito User Pool (Shared Infrastructure table), owned by auth-unit" },
+    { "id": "NFR6.1", "status": "N/A", "target": "Process control (change-review trigger, access-boundary rule), not an infrastructure resource" },
+    { "id": "NFR-SC.1", "status": "OK", "target": "infrastructure-specification.md > Infrastructure Services > Post DynamoDB table (on-demand capacity)" },
+    { "id": "NFR-OBS.1", "status": "OK", "target": "monitoring-design.md > Metrics & KPIs (custom feed-post-count metric)" },
+    { "id": "NFR-OBS.2", "status": "OK", "target": "monitoring-design.md > Logs & Tracing (AppSync CloudWatch Logs integration)" },
+    { "id": "NFR-OBS.3", "status": "N/A", "target": "No tracing infrastructure — not applicable" },
+    { "id": "NFR-OBS.4", "status": "OK", "target": "monitoring-design.md > Alerts — explicitly none configured" }
+  ]
+}

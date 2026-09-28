@@ -1,0 +1,16 @@
+{
+  "stage": "functional-design",
+  "unit": "suggestion-unit",
+  "upstream_ids": ["FR3.1", "FR3.2", "FR3.3", "FR3.4", "FR3.5"],
+  "coverage": [
+    { "id": "FR3.1", "status": "OK", "target": "BR3.1" },
+    { "id": "FR3.2", "status": "OK", "target": "BR3.2" },
+    { "id": "FR3.3", "status": "OK", "target": "BR3.3" },
+    { "id": "FR3.4", "status": "OK", "target": "BR3.3" },
+    { "id": "FR3.5", "status": "OK", "target": "BR3.6" }
+  ],
+  "reverse": [
+    { "id": "BR3.4", "status": "N/A", "target": "Functional Design Q1 clarification — delete/permanence semantics, not derived from a pre-existing FR" },
+    { "id": "BR3.5", "status": "N/A", "target": "Functional Design Q2/Q2a clarification — daily submission rate limit, not derived from a pre-existing FR" }
+  ]
+}

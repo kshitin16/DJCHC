@@ -1,0 +1,19 @@
+{
+  "stage": "functional-design",
+  "unit": "reminder-unit",
+  "upstream_ids": ["FR7.2", "FR7.3", "FR7.4", "FR7.5", "FR7.6", "FR7.7", "FR7.8"],
+  "coverage": [
+    { "id": "FR7.2", "status": "OK", "target": "BR7.1, BR7.5, BR7.7" },
+    { "id": "FR7.3", "status": "OK", "target": "BR7.11" },
+    { "id": "FR7.4", "status": "OK", "target": "BR7.2" },
+    { "id": "FR7.5", "status": "OK", "target": "BR7.3" },
+    { "id": "FR7.6", "status": "OK", "target": "BR7.4" },
+    { "id": "FR7.7", "status": "OK", "target": "BR7.5" },
+    { "id": "FR7.8", "status": "OK", "target": "BR7.6" }
+  ],
+  "reverse": [
+    { "id": "BR7.8", "status": "N/A", "target": "Domain Design Q3 / Contract Design Q1 clarification — reschedule-on-edit behavior, not derived from a pre-existing FR" },
+    { "id": "BR7.9", "status": "N/A", "target": "Contract Design Q2 (redo pass) clarification — auto-cancel-on-delete cascade, not derived from a pre-existing FR" },
+    { "id": "BR7.10", "status": "N/A", "target": "Contract Design Q2 (redo pass) clarification — idempotency requirement, not derived from a pre-existing FR" }
+  ]
+}

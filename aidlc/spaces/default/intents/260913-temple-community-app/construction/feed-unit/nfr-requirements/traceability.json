@@ -1,0 +1,16 @@
+{
+  "stage": "nfr-requirements",
+  "unit": "feed-unit",
+  "upstream_ids": ["NFR1", "NFR2", "NFR3", "NFR4", "NFR5", "NFR6", "NFR7", "NFR8"],
+  "coverage": [
+    { "id": "NFR1", "status": "OK", "target": "NFR1.1, NFR1.2, NFR1.3 — FeedUnit is NFR1's primary owner (the feed-load-time requirement is specifically this Unit's listPosts request path)" },
+    { "id": "NFR2", "status": "OK", "target": "NFR2.1, NFR2.2, NFR2.3, NFR2.4" },
+    { "id": "NFR3", "status": "N/A", "target": "NFR3 (payment-data handling) belongs to donation-unit; FeedUnit has no payment surface" },
+    { "id": "NFR4", "status": "OK", "target": "NFR4.1 (data protection — Post content is public; createdByGoogleId is the only personal-data field)" },
+    { "id": "NFR5", "status": "N/A", "target": "NFR5 (payment reconciliation) belongs to donation-unit" },
+    { "id": "NFR6", "status": "OK", "target": "NFR6.1 (services/-layer access boundary and mandatory self-review before merging admin-authorization changes)" },
+    { "id": "NFR7", "status": "N/A", "target": "Accessibility (WCAG AA baseline) is a UI-rendering concern owned by flutter-app-unit; FeedUnit has no UI of its own" },
+    { "id": "NFR8", "status": "N/A", "target": "Testing methodology/coverage floor is a cross-cutting Build and Test concern, not a Unit-level NFR target" }
+  ],
+  "note": "scalability-requirements.md (NFR-SC.1) and observability-requirements.md (NFR-OBS.1-4) are intentionally outside the NFR1-NFR8 inheritance chain above: inception's requirements.md defines no scalability or observability NFR for this project, so both files use Unit-local IDs rather than a fabricated inception sub-ID, consistent with the discipline established at auth-unit's NFR review (R-06) and donation-unit's NFR pass."
+}

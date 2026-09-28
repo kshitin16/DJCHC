@@ -1,0 +1,16 @@
+{
+  "stage": "nfr-requirements",
+  "unit": "pdf-library-unit",
+  "upstream_ids": ["NFR1", "NFR2", "NFR3", "NFR4", "NFR5", "NFR6", "NFR7", "NFR8"],
+  "coverage": [
+    { "id": "NFR1", "status": "N/A", "target": "NFR1 (feed content displays within 2 seconds) is specifically FeedUnit's request path; PdfLibraryUnit shares no request path with the feed's content-display flow" },
+    { "id": "NFR2", "status": "OK", "target": "NFR2.1, NFR2.2, NFR2.3, NFR2.4" },
+    { "id": "NFR3", "status": "N/A", "target": "NFR3 (raw payment credentials never stored/transmitted) is specifically about payment-data handling, owned by donation-unit; PdfLibraryUnit has no payment surface. Its own pre-signed-URL security work (NFR-SEC.1) is a genuinely different concern (file-transfer security) and is NOT counted as NFR3 coverage, to avoid the fabricated-coverage mistake auth-unit's review (R-06) caught" },
+    { "id": "NFR4", "status": "OK", "target": "NFR4.1 (data protection — S3/DynamoDB encryption)" },
+    { "id": "NFR5", "status": "N/A", "target": "NFR5 (payment reconciliation) belongs to donation-unit" },
+    { "id": "NFR6", "status": "OK", "target": "NFR6.1 (services/-layer access boundary and mandatory self-review before merging upload/delete-authorization or pre-signed-URL-configuration changes)" },
+    { "id": "NFR7", "status": "N/A", "target": "Accessibility (WCAG AA baseline) is a UI-rendering concern owned by flutter-app-unit; PdfLibraryUnit has no UI of its own" },
+    { "id": "NFR8", "status": "N/A", "target": "Testing methodology/coverage floor is a cross-cutting Build and Test concern, not a Unit-level NFR target" }
+  ],
+  "note": "performance-requirements.md (NFR-PERF.1-3), scalability-requirements.md (NFR-SC.1), observability-requirements.md (NFR-OBS.1-4), and security-requirements.md's NFR-SEC.1 (pre-signed URL security, closing the disclosed replay-protection gap) are intentionally outside the NFR1-NFR8 inheritance chain above: none of them substantively cover an inception NFR this Unit doesn't already own via NFR2/NFR4/NFR6, so they use Unit-local IDs rather than a fabricated inception sub-ID."
+}

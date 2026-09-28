@@ -1,0 +1,29 @@
+{
+  "stage": "infrastructure-design",
+  "unit": "auth-unit",
+  "upstream_ids": [
+    "NFR1.1", "NFR1.2",
+    "NFR2.1", "NFR2.2", "NFR2.3", "NFR2.4",
+    "NFR3.1", "NFR3.2", "NFR3.3", "NFR3.4", "NFR3.5",
+    "NFR-SC.1",
+    "NFR-OBS.1", "NFR-OBS.2", "NFR-OBS.3", "NFR-OBS.4"
+  ],
+  "coverage": [
+    { "id": "NFR1.1", "status": "N/A", "target": "No infrastructure decision — sign-in latency is bounded entirely by Cognito/Google's own managed latency, not by anything this Unit provisions" },
+    { "id": "NFR1.2", "status": "N/A", "target": "No infrastructure decision — an in-memory client-side JWT claim read, no AWS resource involved" },
+    { "id": "NFR2.1", "status": "OK", "target": "infrastructure-specification.md > Deployment > Region (ap-south-1) — the one infrastructure choice affecting best-effort availability for this Unit" },
+    { "id": "NFR2.2", "status": "N/A", "target": "No infrastructure decision — no circuit breaker or failover mechanism to provision, per NFR Design's own accepted-risk posture" },
+    { "id": "NFR2.3", "status": "N/A", "target": "Cognito's own managed durability requires no infrastructure configuration from this project" },
+    { "id": "NFR2.4", "status": "N/A", "target": "No infrastructure decision — no secondary region/failover provisioned, an accepted risk per NFR Design" },
+    { "id": "NFR3.1", "status": "OK", "target": "infrastructure-specification.md > Infrastructure Services > Cognito User Pool (PUBLIC App Client, PKCE, token lifetimes)" },
+    { "id": "NFR3.2", "status": "OK", "target": "infrastructure-specification.md > Infrastructure Services > Cognito User Pool (\"Admin\" Cognito Group)" },
+    { "id": "NFR3.3", "status": "N/A", "target": "Cognito's own default managed encryption requires no additional infrastructure configuration" },
+    { "id": "NFR3.4", "status": "N/A", "target": "No separate infrastructure resource — the STRIDE mitigations resolve to the Cognito User Pool/Group configuration already covered under NFR3.1/NFR3.2" },
+    { "id": "NFR3.5", "status": "N/A", "target": "Process control (change-review trigger), not an infrastructure resource — see cicd-pipeline.md's production-promotion checklist instead" },
+    { "id": "NFR-SC.1", "status": "N/A", "target": "Cognito auto-scales with no capacity/sizing configuration required from this project" },
+    { "id": "NFR-OBS.1", "status": "OK", "target": "monitoring-design.md > Metrics & KPIs (Cognito's built-in CloudWatch metrics: SignInSuccesses, SignInThrottles, TokenRefresh*)" },
+    { "id": "NFR-OBS.2", "status": "OK", "target": "monitoring-design.md > Logs & Tracing (CloudTrail, account-wide)" },
+    { "id": "NFR-OBS.3", "status": "N/A", "target": "No tracing infrastructure — no internal hop to trace" },
+    { "id": "NFR-OBS.4", "status": "OK", "target": "monitoring-design.md > Alerts — explicitly none configured, matching NFR Design's affirmed posture" }
+  ]
+}

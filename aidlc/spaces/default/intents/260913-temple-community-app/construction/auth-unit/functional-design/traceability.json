@@ -1,0 +1,14 @@
+{
+  "stage": "functional-design",
+  "unit": "auth-unit",
+  "upstream_ids": ["FR1.1", "FR1.2", "FR1.3"],
+  "coverage": [
+    { "id": "FR1.1", "status": "OK", "target": "BR1.1" },
+    { "id": "FR1.2", "status": "OK", "target": "BR1.2" },
+    { "id": "FR1.3", "status": "Deferred", "target": "Cross-cutting concern (public/signed-in access split) — AuthUnit provides the identity/admin primitives (BR1.1, BR1.2) that make the split possible, but each consuming Unit (FeedUnit, SuggestionUnit, DonationUnit, PdfLibraryUnit, ReminderUnit) implements and owns its own half of the split, per unit-of-work-story-map.md's Cross-Cutting Requirements. Not a single AuthUnit-owned rule." }
+  ],
+  "reverse": [
+    { "id": "BR1.3", "status": "N/A", "target": "Functional Design Q3 clarification — admin-revocation timing policy, not derived from a pre-existing FR" },
+    { "id": "BR1.4", "status": "N/A", "target": "Functional Design Q2 clarification — no-first-sign-in-special-case policy, not derived from a pre-existing FR" }
+  ]
+}

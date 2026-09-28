@@ -1,0 +1,32 @@
+{
+  "stage": "nfr-design",
+  "unit": "suggestion-unit",
+  "upstream_ids": [
+    "NFR-PERF.1", "NFR-PERF.2",
+    "NFR2.1", "NFR2.2", "NFR2.3", "NFR2.4",
+    "NFR4.1",
+    "NFR-AUTHZ.1",
+    "NFR-RATE.1",
+    "NFR6.1",
+    "NFR-SC.1",
+    "NFR-OBS.1", "NFR-OBS.2", "NFR-OBS.3", "NFR-OBS.4", "NFR-OBS.5"
+  ],
+  "coverage": [
+    { "id": "NFR-PERF.1", "status": "OK", "target": "performance-design.md > Submit Suggestion path" },
+    { "id": "NFR-PERF.2", "status": "OK", "target": "performance-design.md > View queries — allSuggestions pagination-loop fix (Q1) closing the disclosed 1MB-cap risk" },
+    { "id": "NFR2.1", "status": "OK", "target": "reliability-design.md > best-effort availability" },
+    { "id": "NFR2.2", "status": "OK", "target": "reliability-design.md > no resilience pattern beyond existing error+retry" },
+    { "id": "NFR2.3", "status": "OK", "target": "reliability-design.md > Data durability, PITR recommendation for Suggestion table only" },
+    { "id": "NFR2.4", "status": "OK", "target": "reliability-design.md > no failover designed" },
+    { "id": "NFR4.1", "status": "OK", "target": "security-design.md > Encryption" },
+    { "id": "NFR-AUTHZ.1", "status": "OK", "target": "security-design.md > Authorization architecture (unchanged from NFR Requirements)" },
+    { "id": "NFR-RATE.1", "status": "OK", "target": "security-design.md > Rate limiting design (TTL addition, Q2)" },
+    { "id": "NFR6.1", "status": "OK", "target": "security-design.md > Process controls" },
+    { "id": "NFR-SC.1", "status": "OK", "target": "scalability-design.md > on-demand DynamoDB, TTL-bounded SuggestionDailyCount growth" },
+    { "id": "NFR-OBS.1", "status": "OK", "target": "observability-design.md > custom suggestion-count metric" },
+    { "id": "NFR-OBS.2", "status": "OK", "target": "observability-design.md > structured logging per existing spec" },
+    { "id": "NFR-OBS.3", "status": "OK", "target": "observability-design.md > tracing not applicable" },
+    { "id": "NFR-OBS.4", "status": "OK", "target": "observability-design.md > Unauthorized-access visibility (AppSync CloudWatch access logs, unchanged)" },
+    { "id": "NFR-OBS.5", "status": "OK", "target": "observability-design.md > no alerting configured" }
+  ]
+}

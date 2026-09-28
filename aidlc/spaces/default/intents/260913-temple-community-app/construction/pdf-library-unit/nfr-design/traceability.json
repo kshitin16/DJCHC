@@ -1,0 +1,34 @@
+{
+  "stage": "nfr-design",
+  "unit": "pdf-library-unit",
+  "upstream_ids": [
+    "NFR-PERF.1", "NFR-PERF.2", "NFR-PERF.3",
+    "NFR2.1", "NFR2.2", "NFR2.3", "NFR2.4",
+    "NFR-SEC.1", "NFR-SEC.1.1", "NFR-SEC.1.2", "NFR-SEC.1.3",
+    "NFR4.1",
+    "NFR6.1", "NFR-AUTHZ",
+    "NFR-SC.1",
+    "NFR-OBS.1", "NFR-OBS.2", "NFR-OBS.3", "NFR-OBS.4"
+  ],
+  "coverage": [
+    { "id": "NFR-PERF.1", "status": "OK", "target": "performance-design.md > Browse/List Documents path" },
+    { "id": "NFR-PERF.2", "status": "OK", "target": "performance-design.md > Download URL issuance (local SDK signing)" },
+    { "id": "NFR-PERF.3", "status": "OK", "target": "performance-design.md > Upload latency (createDocumentUploadUrl, confirmDocumentUpload)" },
+    { "id": "NFR2.1", "status": "OK", "target": "reliability-design.md > best-effort availability" },
+    { "id": "NFR2.2", "status": "OK", "target": "reliability-design.md > no resilience pattern beyond existing error+retry" },
+    { "id": "NFR2.3", "status": "OK", "target": "reliability-design.md > Data durability (S3 11-nines, DynamoDB managed replication, Versioning OFF and committed — corrected at R-05, was stale 'deferred' text after R-03's fix)" },
+    { "id": "NFR2.4", "status": "OK", "target": "reliability-design.md > no failover designed" },
+    { "id": "NFR-SEC.1", "status": "OK", "target": "security-design.md > S3 bucket configuration, Pre-signed URL security section headers" },
+    { "id": "NFR-SEC.1.1", "status": "OK", "target": "security-design.md > Pre-signed URL security (unchanged from NFR Requirements, upload URL expiration)" },
+    { "id": "NFR-SEC.1.2", "status": "OK", "target": "security-design.md > S3 bucket configuration — BlockPublicAccess.BLOCK_ALL (Q1), the commitment that makes this requirement's assumption actually true" },
+    { "id": "NFR-SEC.1.3", "status": "OK", "target": "security-design.md > Pre-signed URL security (unchanged, accepted residual content-substitution risk)" },
+    { "id": "NFR4.1", "status": "OK", "target": "security-design.md > S3 bucket configuration (SSE-S3 encryption)" },
+    { "id": "NFR6.1", "status": "OK", "target": "security-design.md > Process controls (Change-review trigger half, corrected at R-01 to restore the pre-signed-URL-expiration trigger item) — corrected at R-04, this row previously pointed at the Access-boundary rule sentence, which NFR-AUTHZ actually names" },
+    { "id": "NFR-AUTHZ", "status": "OK", "target": "security-design.md > Process controls (Access-boundary rule: only pdf_service.dart may call package:amplify_*) — corrected at R-04 to match security-requirements.md's actual ID assignment; added at this stage's review (R-02), was previously covered only in prose with no traceability row, the same gap shape feed-unit's NFR-AUTHZ.1 omission had" },
+    { "id": "NFR-SC.1", "status": "OK", "target": "scalability-design.md > S3 + DynamoDB on-demand, no partitioning needed" },
+    { "id": "NFR-OBS.1", "status": "OK", "target": "observability-design.md > custom document-count-per-category metric" },
+    { "id": "NFR-OBS.2", "status": "OK", "target": "observability-design.md > structured logging per existing spec" },
+    { "id": "NFR-OBS.3", "status": "OK", "target": "observability-design.md > tracing not applicable" },
+    { "id": "NFR-OBS.4", "status": "OK", "target": "observability-design.md > no alerting configured" }
+  ]
+}

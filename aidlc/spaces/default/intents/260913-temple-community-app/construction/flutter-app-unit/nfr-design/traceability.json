@@ -1,0 +1,17 @@
+{
+  "stage": "nfr-design",
+  "unit": "flutter-app-unit",
+  "upstream_ids": [
+    "NFR-PERF.1", "NFR-PERF.2", "NFR-PERF.3",
+    "NFR4.1", "NFR6.1", "NFR-AUTHZ.2", "NFR-CRASH.1"
+  ],
+  "coverage": [
+    { "id": "NFR-PERF.1", "status": "OK", "target": "performance-design.md > Design for NFR-PERF.1 — blocking path limited to engine init + in-memory AuthState read; device identity/Crashlytics/push-permission deferred async" },
+    { "id": "NFR-PERF.2", "status": "OK", "target": "performance-design.md > Design for NFR-PERF.2 — existing synchronous Loading-state render on navigation covers the budget, no additional technique needed" },
+    { "id": "NFR-PERF.3", "status": "OK", "target": "performance-design.md > Design for NFR-PERF.3 — no offline caching, error+retry per screen (inherited, no new design)" },
+    { "id": "NFR4.1", "status": "OK", "target": "security-design.md > Data protection design — Amplify Auth default secure storage, TLS in transit, no custom persistence" },
+    { "id": "NFR6.1", "status": "OK", "target": "security-design.md > Access-boundary and change-review process design — services/*.dart import boundary, self-review trigger" },
+    { "id": "NFR-AUTHZ.2", "status": "OK", "target": "security-design.md > Client-side gating is a UX convenience, never the security boundary — design consequence stated explicitly" },
+    { "id": "NFR-CRASH.1", "status": "OK", "target": "security-design.md > Client-side crash reporting design — Crashlytics async init, default FlutterError/PlatformDispatcher wiring, default (non-custom) payload only" }
+  ]
+}

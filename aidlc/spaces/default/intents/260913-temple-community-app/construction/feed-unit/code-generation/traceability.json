@@ -1,0 +1,38 @@
+{
+  "stage": "code-generation",
+  "unit": "feed-unit",
+  "upstream_ids": [
+    "BR2.1", "BR2.2", "BR2.3", "BR2.4", "BR2.5", "BR2.6", "BR2.7",
+    "NFR1.1", "NFR1.2", "NFR1.3",
+    "NFR2.1", "NFR2.2", "NFR2.3", "NFR2.4",
+    "NFR4.1",
+    "NFR-AUTHZ.1",
+    "NFR6.1",
+    "NFR-SC.1",
+    "NFR-OBS.1", "NFR-OBS.2", "NFR-OBS.3", "NFR-OBS.4"
+  ],
+  "coverage": [
+    { "id": "BR2.1", "status": "OK", "target": "amplify/data/post-shared/post-rules.ts" },
+    { "id": "BR2.2", "status": "OK", "target": "amplify/data/post-shared/post-rules.ts" },
+    { "id": "BR2.3", "status": "OK", "target": "amplify/data/resource.ts" },
+    { "id": "BR2.4", "status": "OK", "target": "amplify/functions/feed-api/handler.ts" },
+    { "id": "BR2.5", "status": "OK", "target": "amplify/data/post-resolvers/updatePost.js" },
+    { "id": "BR2.6", "status": "OK", "target": "amplify/data/post-resolvers/deletePost.js" },
+    { "id": "BR2.7", "status": "OK", "target": "amplify/data/post-resolvers/listAllPostsForAdmin.js" },
+    { "id": "NFR1.1", "status": "OK", "target": "amplify/functions/feed-api/handler.ts" },
+    { "id": "NFR1.2", "status": "OK", "target": "amplify/data/post-resolvers/listAllPostsForAdmin.js" },
+    { "id": "NFR1.3", "status": "OK", "target": "amplify/data/post-resolvers/createPost.js" },
+    { "id": "NFR2.1", "status": "N/A", "target": "Best-effort availability inherited from AppSync/DynamoDB; no code" },
+    { "id": "NFR2.2", "status": "N/A", "target": "No circuit breaker designed; client-side error+retry belongs to flutter-app-unit" },
+    { "id": "NFR2.3", "status": "N/A", "target": "DynamoDB-managed replication and encryption; no project-level backup code" },
+    { "id": "NFR2.4", "status": "N/A", "target": "No failover designed (reliability-design.md accepted risk)" },
+    { "id": "NFR4.1", "status": "N/A", "target": "Public content; DynamoDB-managed encryption at rest and AppSync TLS in transit need no code surface in this Unit" },
+    { "id": "NFR-AUTHZ.1", "status": "OK", "target": "amplify/data/resource.ts" },
+    { "id": "NFR6.1", "status": "OK", "target": "README.md" },
+    { "id": "NFR-SC.1", "status": "OK", "target": "amplify/data/resource.ts" },
+    { "id": "NFR-OBS.1", "status": "N/A", "target": "Standard AppSync/Lambda CloudWatch metrics exist by default; no custom metric designed for this Unit" },
+    { "id": "NFR-OBS.2", "status": "N/A", "target": "AppSync CloudWatch Logs integration is a deploy-time setting (Environment Provisioning), not code in this Unit" },
+    { "id": "NFR-OBS.3", "status": "N/A", "target": "Tracing not applicable per observability-design.md" },
+    { "id": "NFR-OBS.4", "status": "N/A", "target": "No alerting configured by design (observability-design.md)" }
+  ]
+}

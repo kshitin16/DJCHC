@@ -1,0 +1,32 @@
+{
+  "stage": "nfr-design",
+  "unit": "reminder-unit",
+  "upstream_ids": [
+    "NFR-PERF.1", "NFR-PERF.2", "NFR-PERF.3",
+    "NFR2.1", "NFR2.2", "NFR2.3", "NFR2.4",
+    "NFR4.1",
+    "NFR-AUTHZ.1", "NFR-AUTHZ.2",
+    "NFR6.1",
+    "NFR-SC.1",
+    "NFR-OBS.1", "NFR-OBS.2", "NFR-OBS.3", "NFR-OBS.4"
+  ],
+  "coverage": [
+    { "id": "NFR-PERF.1", "status": "OK", "target": "performance-design.md > myReminders sync path" },
+    { "id": "NFR-PERF.2", "status": "OK", "target": "performance-design.md > registerDeviceToken/setRemindersEnabled/snoozeReminder/cancelReminder path" },
+    { "id": "NFR-PERF.3", "status": "OK", "target": "performance-design.md > EventBridge Scheduler mechanism (Q1) — the scheduled-compute mechanism finally chosen" },
+    { "id": "NFR2.1", "status": "OK", "target": "reliability-design.md > best-effort availability" },
+    { "id": "NFR2.2", "status": "OK", "target": "reliability-design.md > no circuit breaker, schedule-sync failure handling (Q2)" },
+    { "id": "NFR2.3", "status": "OK", "target": "reliability-design.md > Data durability" },
+    { "id": "NFR2.4", "status": "OK", "target": "reliability-design.md > no failover designed" },
+    { "id": "NFR4.1", "status": "OK", "target": "security-design.md > Encryption" },
+    { "id": "NFR-AUTHZ.1", "status": "OK", "target": "security-design.md > Authorization architecture (unchanged from NFR Requirements)" },
+    { "id": "NFR-AUTHZ.2", "status": "OK", "target": "security-design.md > Push-token registration abuse (unchanged, accepted risk)" },
+    { "id": "NFR6.1", "status": "OK", "target": "security-design.md > Process controls" },
+    { "id": "NFR-SC.1", "status": "OK", "target": "scalability-design.md > EventBridge Scheduler + serverless capacity" },
+    { "id": "NFR-OBS.1", "status": "OK", "target": "observability-design.md > delivery-timing metric, custom business metrics" },
+    { "id": "NFR-OBS.2", "status": "OK", "target": "observability-design.md > structured logging, new schedule-management log lines" },
+    { "id": "NFR-OBS.3", "status": "OK", "target": "observability-design.md > correlation practice extended to EventBridge interactions" },
+    { "id": "NFR-OBS.4", "status": "OK", "target": "observability-design.md > no alerting configured" }
+  ],
+  "note": "This Unit's scheduled-compute mechanism (deferred since Contract Design's Open Questions) is resolved at this stage: EventBridge Scheduler with per-Reminder one-time schedules (Q1) for the deliver-push/auto-clear paths, keyed by Reminder.id (no Scan/GSI needed there). The Contract 8 event handler's own lookup is a genuinely different access pattern (by postId, one-to-many) and DOES need a new GSI on postId — this was initially glossed over as if EventBridge Scheduler eliminated all DynamoDB access-pattern design work, corrected at this stage's review (R-02) to design that GSI explicitly rather than repeat suggestion-unit's Query/Scan mistake in a new form. BR7.3's re-snooze-of-an-already-SNOOZED-Reminder ambiguity (disclosed at NFR Requirements, R-05) is also resolved here (functional-design/rules.md and functional-spec.md both amended) as an idempotent no-op gated behind the ownership check — a same-pass ordering bug in that fix (R-01) was caught and corrected before this receipt, and a further gap (a mutation retry not re-syncing the schedule on its own no-op branches) was caught and corrected at R-02/R-03/R-04. Post-gate, the builder made an explicit simplicity choice: BR7.8 (reschedule on Post dateTime change) is now a no-op — a date change surfaces as an additional Reminder on the device's next sync (BR7.1, widened) instead of an in-place reschedule, narrowing the Contract 8 handler's GSI-backed lookup to BR7.9 (PostDeleted) alone."
+}

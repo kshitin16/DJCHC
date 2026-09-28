@@ -1,0 +1,32 @@
+{
+  "stage": "code-generation",
+  "unit": "suggestion-unit",
+  "version": 1,
+  "writes": [
+    { "path": "package.json" },
+    { "path": "package-lock.json" },
+    { "path": "tsconfig.json" },
+    { "path": "jest.config.ts" },
+    { "path": "README.md" },
+    { "path": "amplify/backend.ts" },
+    { "path": "amplify/data/resource.ts" },
+    { "path": "amplify/data/suggestion-schema.test.ts" },
+    { "path": "amplify/data/post-schema.test.ts" },
+    { "path": "amplify/data/suggestion-resolvers/myPastSuggestions.js" },
+    { "path": "amplify/data/suggestion-resolvers/myPastSuggestions.test.ts" },
+    { "path": "amplify/functions/suggestion-shared/types.ts" },
+    { "path": "amplify/functions/suggestion-shared/errors.ts" },
+    { "path": "amplify/functions/suggestion-shared/rules.ts" },
+    { "path": "amplify/functions/suggestion-shared/rules.test.ts" },
+    { "path": "amplify/functions/suggestion-shared/suggestion-repository.ts" },
+    { "path": "amplify/functions/suggestion-shared/suggestion-repository.test.ts" },
+    { "path": "amplify/functions/suggestion-shared/metrics.ts" },
+    { "path": "amplify/functions/suggestion-shared/metrics.test.ts" },
+    { "path": "amplify/functions/submit-suggestion/resource.ts" },
+    { "path": "amplify/functions/submit-suggestion/handler.ts" },
+    { "path": "amplify/functions/submit-suggestion/handler.test.ts" },
+    { "path": "amplify/functions/all-suggestions/resource.ts" },
+    { "path": "amplify/functions/all-suggestions/handler.ts" },
+    { "path": "amplify/functions/all-suggestions/handler.test.ts" }
+  ]
+}

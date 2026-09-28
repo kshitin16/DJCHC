@@ -1,0 +1,55 @@
+name: sarovar_jinalaya
+description: >-
+  Sarovar Jinalaya temple community app (flutter-app-unit): feed, calendar and
+  reminders, suggestion box, donations and PDF library over the Amplify Gen2
+  backend in amplify/.
+publish_to: 'none'
+
+# Build number is strictly increasing across releases (both stores reject a
+# reused build number) — bump before every `flutter build` for a release.
+version: 0.1.0+1
+
+environment:
+  sdk: ^3.13.3
+
+dependencies:
+  flutter:
+    sdk: flutter
+  # Global Material/Widgets/Cupertino localization delegates — without this,
+  # MaterialApp only ships its built-in English-only "Default" delegates, and
+  # declaring supportedLocales: [en, hi] alone does not make Hindi resolve.
+  flutter_localizations:
+    sdk: flutter
+
+  # Amplify Gen2 client — imported ONLY by lib/services/amplify_gateway.dart
+  # (team.md Q12 / project.md Mandated: only services/ may touch Amplify).
+  amplify_flutter: ^2.15.0
+  amplify_auth_cognito: ^2.15.1
+  amplify_api: ^2.15.1
+
+  # Firebase: Crashlytics (NFR-CRASH.1) + FCM push for Contract 9 reminders.
+  firebase_core: ^4.15.0
+  firebase_crashlytics: ^5.4.0
+  firebase_messaging: ^16.7.0
+
+  # Language override only (a non-sensitive UI preference, security-design.md).
+  shared_preferences: ^2.5.5
+  # Open a PDF pre-signed URL or the aggregator checkout URL externally.
+  url_launcher: ^6.3.2
+  # Direct-to-S3 PUT for Contract 6 uploads.
+  http: ^1.6.0
+  # Admin picks a PDF (Screen 11).
+  file_picker: ^13.1.0
+  # Number/date formatting.
+  intl: ^0.20.3
+  cupertino_icons: ^1.0.8
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  integration_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true

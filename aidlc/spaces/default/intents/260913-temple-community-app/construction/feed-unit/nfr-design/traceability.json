@@ -1,0 +1,30 @@
+{
+  "stage": "nfr-design",
+  "unit": "feed-unit",
+  "upstream_ids": [
+    "NFR1.1", "NFR1.2", "NFR1.3",
+    "NFR2.1", "NFR2.2", "NFR2.3", "NFR2.4",
+    "NFR4.1",
+    "NFR-AUTHZ.1",
+    "NFR6.1",
+    "NFR-SC.1",
+    "NFR-OBS.1", "NFR-OBS.2", "NFR-OBS.3", "NFR-OBS.4"
+  ],
+  "coverage": [
+    { "id": "NFR1.1", "status": "OK", "target": "performance-design.md > public listPosts path, no caching (Q1)" },
+    { "id": "NFR1.2", "status": "OK", "target": "performance-design.md > admin management view path (pagination gap flagged, not closed — R-04)" },
+    { "id": "NFR1.3", "status": "OK", "target": "performance-design.md > Create/Edit/Delete Post path" },
+    { "id": "NFR2.1", "status": "OK", "target": "reliability-design.md > best-effort availability" },
+    { "id": "NFR2.2", "status": "OK", "target": "reliability-design.md > no circuit breaker, existing error+retry" },
+    { "id": "NFR2.3", "status": "OK", "target": "reliability-design.md > DynamoDB-managed replication/encryption" },
+    { "id": "NFR2.4", "status": "OK", "target": "reliability-design.md > no failover designed" },
+    { "id": "NFR4.1", "status": "OK", "target": "security-design.md > Data protection (public content, DynamoDB-managed encryption)" },
+    { "id": "NFR-AUTHZ.1", "status": "OK", "target": "security-design.md > Authorization architecture (public listPosts, resolver-level cognito:groups check) — added at this stage's review (R-01), was missing from this ledger despite being substantively covered in prose" },
+    { "id": "NFR6.1", "status": "OK", "target": "security-design.md > Process controls" },
+    { "id": "NFR-SC.1", "status": "OK", "target": "scalability-design.md > on-demand DynamoDB capacity" },
+    { "id": "NFR-OBS.1", "status": "OK", "target": "observability-design.md > standard AppSync CloudWatch metrics" },
+    { "id": "NFR-OBS.2", "status": "OK", "target": "observability-design.md > AppSync CloudWatch Logs integration" },
+    { "id": "NFR-OBS.3", "status": "OK", "target": "observability-design.md > tracing not applicable" },
+    { "id": "NFR-OBS.4", "status": "OK", "target": "observability-design.md > no alerting configured" }
+  ]
+}

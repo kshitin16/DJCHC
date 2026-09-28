@@ -1,0 +1,8 @@
+node_modules/
+coverage/
+.amplify/
+dist/
+aidlc/
+.claude/
+package-lock.json
+amplify_outputs*

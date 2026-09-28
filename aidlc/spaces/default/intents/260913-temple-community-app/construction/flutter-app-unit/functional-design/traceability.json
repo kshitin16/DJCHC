@@ -1,0 +1,15 @@
+{
+  "stage": "functional-design",
+  "unit": "flutter-app-unit",
+  "upstream_ids": ["FR4.1", "FR1.3", "FR7.1"],
+  "coverage": [
+    { "id": "FR4.1", "status": "OK", "target": "Workflow: Language Selection & Localization" },
+    { "id": "FR1.3", "status": "OK", "target": "Workflow: Screen Access Control" },
+    { "id": "FR7.1", "status": "OK", "target": "Workflow: Calendar & Reminders (Screen 12)" }
+  ],
+  "reverse": [
+    { "id": "Screen 7 (Admin: Suggestions List)", "status": "N/A", "target": "Functional Design Q1 clarification — a screen for FR3.3's existing admin-visibility requirement, not a new FR" },
+    { "id": "Screens 8-11 (Donate, My Donations, PDF Library, Admin: PDF Library Management)", "status": "Deferred", "target": "Functional Design Q3 — UI workflows for FR5/FR6, deferred from build until donation-unit/pdf-library-unit ship and FR5.4's tax-exemption precondition clears; specified now per the Domain Design whole-domain-mapping decision" },
+    { "id": "Screen 12 (Calendar) reminder controls (FR7.2-FR7.8)", "status": "N/A", "target": "Owned and traced by reminder-unit's own traceability.json — this Unit only renders the screen calling Contract 9, per unit-of-work-story-map.md's FR7.2-FR7.8 assignment to U7, not U6" }
+  ]
+}

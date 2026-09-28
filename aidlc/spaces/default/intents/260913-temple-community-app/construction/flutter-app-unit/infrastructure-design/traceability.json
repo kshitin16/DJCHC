@@ -1,0 +1,17 @@
+{
+  "stage": "infrastructure-design",
+  "unit": "flutter-app-unit",
+  "upstream_ids": [
+    "NFR-PERF.1", "NFR-PERF.2", "NFR-PERF.3",
+    "NFR4.1", "NFR6.1", "NFR-AUTHZ.2", "NFR-CRASH.1"
+  ],
+  "coverage": [
+    { "id": "NFR-PERF.1", "status": "OK", "target": "monitoring-design.md > Metrics & KPIs (cold-start manual profile measurement) and cicd-pipeline.md > Local pre-release verification step 3 — no AWS resource; the infrastructure decision is that no production performance instrumentation (Firebase Performance Monitoring) is provisioned and the target is verified pre-release" },
+    { "id": "NFR-PERF.2", "status": "OK", "target": "monitoring-design.md > Metrics & KPIs (screen-transition manual profile measurement) and cicd-pipeline.md > Local pre-release verification step 3" },
+    { "id": "NFR-PERF.3", "status": "N/A", "target": "No infrastructure decision — no offline cache or CDN is provisioned, per NFR Design's inherited no-caching posture (performance-design.md)" },
+    { "id": "NFR4.1", "status": "OK", "target": "infrastructure-specification.md > Deployment > Networking topology (HTTPS-only to five named endpoint families) and Storage strategy (on-device SDK-managed secure storage only, no server-side store owned by this Unit)" },
+    { "id": "NFR6.1", "status": "N/A", "target": "Process control (services/*.dart import boundary held by the change-review trigger), not an infrastructure resource — see cicd-pipeline.md > Local pre-release verification step 4 and the CI Format + lint row's note that flutter_lints does not enforce it" },
+    { "id": "NFR-AUTHZ.2", "status": "N/A", "target": "No infrastructure mechanism — client-side gating is a UX convenience; enforcement is each backend Unit's own AppSync authorization, provisioned in those Units' Infrastructure Design" },
+    { "id": "NFR-CRASH.1", "status": "OK", "target": "infrastructure-specification.md > Infrastructure Services > Firebase project (one project, one app registration per platform, committed config files, debug-build collection disabled) and monitoring-design.md > Metrics & KPIs / Alerts (Crashlytics crash-free metrics, default new-issue notification)" }
+  ]
+}

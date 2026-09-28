@@ -1,0 +1,31 @@
+{
+  "stage": "nfr-design",
+  "unit": "donation-unit",
+  "upstream_ids": [
+    "NFR-PERF.1", "NFR-PERF.2",
+    "NFR2.1", "NFR2.2", "NFR2.3", "NFR2.4",
+    "NFR3.1", "NFR3.5",
+    "NFR4.1",
+    "NFR5.1", "NFR5.2",
+    "NFR-SC.1",
+    "NFR-OBS.1", "NFR-OBS.2", "NFR-OBS.3", "NFR-OBS.4"
+  ],
+  "coverage": [
+    { "id": "NFR-PERF.1", "status": "OK", "target": "performance-design.md > Initiate Donation path" },
+    { "id": "NFR-PERF.2", "status": "OK", "target": "performance-design.md > Payment Status Reconciliation path (webhook + scheduled poller)" },
+    { "id": "NFR2.1", "status": "OK", "target": "reliability-design.md > best-effort availability" },
+    { "id": "NFR2.2", "status": "OK", "target": "reliability-design.md > timeout + retry/next-cycle, no circuit breaker (Q4)" },
+    { "id": "NFR2.3", "status": "OK", "target": "reliability-design.md > Data durability and backup, PITR recommendation" },
+    { "id": "NFR2.4", "status": "OK", "target": "reliability-design.md > no failover, single aggregator accepted" },
+    { "id": "NFR3.1", "status": "OK", "target": "security-design.md > Webhook endpoint security, Idempotent write design (payment-data-adjacent protections)" },
+    { "id": "NFR3.5", "status": "OK", "target": "security-design.md > Process controls (note: this ID is mislabeled in the upstream nfr-requirements/security-requirements.md — it should read NFR6.1, disclosed at that stage's gate as donation-unit's R-01 finding, not fixed; this traceability entry follows the upstream file's actual current label rather than the corrected one)" },
+    { "id": "NFR4.1", "status": "OK", "target": "security-design.md > Encryption (at rest/in transit)" },
+    { "id": "NFR5.1", "status": "OK", "target": "reliability-design.md / performance-design.md > scheduled-poller reconciliation trigger (Q2)" },
+    { "id": "NFR5.2", "status": "OK", "target": "security-design.md > Idempotent write design (atomic DynamoDB conditional UpdateItem)" },
+    { "id": "NFR-SC.1", "status": "OK", "target": "scalability-design.md > on-demand DynamoDB capacity, serverless auto-scaling" },
+    { "id": "NFR-OBS.1", "status": "OK", "target": "observability-design.md > CloudWatch metrics + custom EMF metrics" },
+    { "id": "NFR-OBS.2", "status": "OK", "target": "observability-design.md > structured JSON logging, 90-day retention" },
+    { "id": "NFR-OBS.3", "status": "OK", "target": "observability-design.md > tracing not applicable" },
+    { "id": "NFR-OBS.4", "status": "OK", "target": "observability-design.md > SNS topic + email subscription (Q3)" }
+  ]
+}

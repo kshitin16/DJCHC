@@ -1,0 +1,34 @@
+{
+  "stage": "code-generation",
+  "unit": "auth-unit",
+  "upstream_ids": [
+    "BR1.1", "BR1.2", "BR1.3", "BR1.4",
+    "NFR1.1", "NFR1.2",
+    "NFR2.1", "NFR2.2", "NFR2.3", "NFR2.4",
+    "NFR3.1", "NFR3.2", "NFR3.3", "NFR3.4", "NFR3.5",
+    "NFR-SC.1",
+    "NFR-OBS.1", "NFR-OBS.2", "NFR-OBS.3", "NFR-OBS.4"
+  ],
+  "coverage": [
+    { "id": "BR1.1", "status": "OK", "target": "amplify/auth/resource.ts" },
+    { "id": "BR1.2", "status": "OK", "target": "amplify/auth/resource.ts" },
+    { "id": "BR1.3", "status": "OK", "target": "amplify/auth/token-policy.ts" },
+    { "id": "BR1.4", "status": "OK", "target": "amplify/backend.ts" },
+    { "id": "NFR1.1", "status": "N/A", "target": "Sign-in round trip is bounded by Cognito/Google response times; no code in this Unit affects it (performance-design.md) — the loading indicator belongs to flutter-app-unit" },
+    { "id": "NFR1.2", "status": "N/A", "target": "Admin check is an in-memory JWT claim read performed by each consuming Unit's authorization rule; this Unit only supplies the claim shape" },
+    { "id": "NFR2.1", "status": "N/A", "target": "Best-effort availability inherited from Cognito; no code" },
+    { "id": "NFR2.2", "status": "N/A", "target": "No circuit breaker or failover designed (reliability-design.md accepted risk); no code" },
+    { "id": "NFR2.3", "status": "N/A", "target": "Cognito-managed durability; no project-level backup code" },
+    { "id": "NFR2.4", "status": "N/A", "target": "No RTO/RPO target; regional outage accepted as undesigned-around risk" },
+    { "id": "NFR3.1", "status": "OK", "target": "amplify/backend.ts" },
+    { "id": "NFR3.2", "status": "OK", "target": "amplify/auth/resource.ts" },
+    { "id": "NFR3.3", "status": "N/A", "target": "Encryption at rest is Cognito-managed and TLS in transit is enforced by Cognito's endpoints; no configurable code surface in this Unit" },
+    { "id": "NFR3.4", "status": "OK", "target": "amplify/backend.ts" },
+    { "id": "NFR3.5", "status": "OK", "target": "README.md" },
+    { "id": "NFR-SC.1", "status": "N/A", "target": "Cognito is fully managed; no scaling code" },
+    { "id": "NFR-OBS.1", "status": "Deferred", "target": "Amplify Auth Hub events are emitted client-side; wiring them to the metrics sink is flutter-app-unit's services/auth_service.dart work" },
+    { "id": "NFR-OBS.2", "status": "N/A", "target": "This Unit runs no code that logs; structured logging applies to consuming Units' Lambdas and the client" },
+    { "id": "NFR-OBS.3", "status": "N/A", "target": "No internal hop to trace (observability-design.md)" },
+    { "id": "NFR-OBS.4", "status": "N/A", "target": "No alerting configured by design (observability-design.md)" }
+  ]
+}

@@ -1,0 +1,38 @@
+{
+  "stage": "code-generation",
+  "unit": "donation-unit",
+  "upstream_ids": [
+    "BR5.1", "BR5.2", "BR5.3", "BR5.4", "BR5.5", "BR5.6",
+    "NFR-PERF.1", "NFR-PERF.2",
+    "NFR2.1", "NFR2.2", "NFR2.3", "NFR2.4",
+    "NFR3.1", "NFR3.5",
+    "NFR4.1",
+    "NFR5.1", "NFR5.2",
+    "NFR-SC.1",
+    "NFR-OBS.1", "NFR-OBS.2", "NFR-OBS.3", "NFR-OBS.4"
+  ],
+  "coverage": [
+    { "id": "BR5.1", "status": "OK", "target": "amplify/functions/donation-shared/aggregator-adapter.ts" },
+    { "id": "BR5.2", "status": "OK", "target": "amplify/functions/donation-shared/validation.ts" },
+    { "id": "BR5.3", "status": "OK", "target": "amplify/functions/donation-shared/validation.ts" },
+    { "id": "BR5.4", "status": "OK", "target": "amplify/functions/donation-reconciler/handler.ts" },
+    { "id": "BR5.5", "status": "OK", "target": "amplify/functions/donation-shared/donation-repository.ts" },
+    { "id": "BR5.6", "status": "OK", "target": "amplify/functions/donation-api/handler.ts" },
+    { "id": "NFR-PERF.1", "status": "OK", "target": "amplify/functions/donation-api/handler.ts" },
+    { "id": "NFR-PERF.2", "status": "OK", "target": "amplify/functions/donation-webhook/handler.ts" },
+    { "id": "NFR2.1", "status": "N/A", "target": "Best-effort availability inherited from managed services; no code" },
+    { "id": "NFR2.2", "status": "OK", "target": "amplify/functions/donation-reconciler/handler.ts" },
+    { "id": "NFR2.3", "status": "OK", "target": "amplify/backend.ts" },
+    { "id": "NFR2.4", "status": "N/A", "target": "No failover designed (single aggregator accepted); no code" },
+    { "id": "NFR3.1", "status": "OK", "target": "amplify/functions/donation-webhook/handler.ts" },
+    { "id": "NFR3.5", "status": "OK", "target": "README.md" },
+    { "id": "NFR4.1", "status": "OK", "target": "amplify/backend.ts" },
+    { "id": "NFR5.1", "status": "OK", "target": "amplify/functions/donation-reconciler/resource.ts" },
+    { "id": "NFR5.2", "status": "OK", "target": "amplify/functions/donation-shared/donation-repository.ts" },
+    { "id": "NFR-SC.1", "status": "OK", "target": "amplify/data/resource.ts" },
+    { "id": "NFR-OBS.1", "status": "Deferred", "target": "Custom EMF business metrics deferred to the full build (thin, flagged-off pass); standard Lambda/AppSync CloudWatch metrics exist by default" },
+    { "id": "NFR-OBS.2", "status": "OK", "target": "amplify/functions/donation-shared/logging.ts" },
+    { "id": "NFR-OBS.3", "status": "N/A", "target": "Tracing not applicable per observability-design.md" },
+    { "id": "NFR-OBS.4", "status": "Deferred", "target": "SNS donation-reconciliation-alerts topic and email subscription deferred to the full build — an Environment Provisioning action per infrastructure-specification.md" }
+  ]
+}

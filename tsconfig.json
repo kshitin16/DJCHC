@@ -1,0 +1,25 @@
+{
+  "compilerOptions": {
+    "target": "es2022",
+    "module": "es2022",
+    "moduleResolution": "bundler",
+    "lib": ["es2022"],
+    "strict": true,
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
+    "noEmit": true,
+    "allowJs": true,
+    "checkJs": true,
+    "paths": {
+      "$amplify/*": ["./.amplify/generated/*"]
+    }
+  },
+  "include": [
+    "amplify/**/*.ts",
+    "amplify/data/post-resolvers/*.js",
+    "amplify/data/suggestion-resolvers/*.js",
+    "jest.config.ts"
+  ],
+  "exclude": ["node_modules", ".amplify", "coverage", "dist"]
+}

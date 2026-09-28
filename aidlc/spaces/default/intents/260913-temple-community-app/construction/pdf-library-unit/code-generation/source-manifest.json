@@ -1,0 +1,27 @@
+{
+  "stage": "code-generation",
+  "unit": "pdf-library-unit",
+  "version": 1,
+  "writes": [
+    { "path": "package.json" },
+    { "path": "package-lock.json" },
+    { "path": "README.md" },
+    { "path": "amplify/backend.ts" },
+    { "path": "amplify/data/resource.ts" },
+    { "path": "amplify/data/document-schema.test.ts" },
+    { "path": "amplify/storage/resource.ts" },
+    { "path": "amplify/functions/document-shared/constants.ts" },
+    { "path": "amplify/functions/document-shared/constants.test.ts" },
+    { "path": "amplify/functions/document-shared/types.ts" },
+    { "path": "amplify/functions/document-shared/errors.ts" },
+    { "path": "amplify/functions/document-shared/validation.ts" },
+    { "path": "amplify/functions/document-shared/validation.test.ts" },
+    { "path": "amplify/functions/document-shared/document-repository.ts" },
+    { "path": "amplify/functions/document-shared/document-repository.test.ts" },
+    { "path": "amplify/functions/document-shared/s3-adapter.ts" },
+    { "path": "amplify/functions/document-shared/s3-adapter.test.ts" },
+    { "path": "amplify/functions/document-api/resource.ts" },
+    { "path": "amplify/functions/document-api/handler.ts" },
+    { "path": "amplify/functions/document-api/handler.test.ts" }
+  ]
+}

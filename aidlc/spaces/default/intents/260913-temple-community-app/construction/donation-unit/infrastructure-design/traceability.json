@@ -1,0 +1,31 @@
+{
+  "stage": "infrastructure-design",
+  "unit": "donation-unit",
+  "upstream_ids": [
+    "NFR-PERF.1", "NFR-PERF.2",
+    "NFR2.1", "NFR2.2", "NFR2.3", "NFR2.4",
+    "NFR3.1", "NFR3.5",
+    "NFR4.1",
+    "NFR5.1", "NFR5.2",
+    "NFR-SC.1",
+    "NFR-OBS.1", "NFR-OBS.2", "NFR-OBS.3", "NFR-OBS.4"
+  ],
+  "coverage": [
+    { "id": "NFR-PERF.1", "status": "OK", "target": "infrastructure-specification.md > Deployment > Resource sizing (webhook Lambda 256MB/10s)" },
+    { "id": "NFR-PERF.2", "status": "OK", "target": "infrastructure-specification.md > Deployment > Resource sizing (reconciliation Lambda 256MB/60s)" },
+    { "id": "NFR2.1", "status": "OK", "target": "infrastructure-specification.md > Deployment > Region/Environments" },
+    { "id": "NFR2.2", "status": "N/A", "target": "No infrastructure decision — no circuit breaker to provision, per NFR Design's own accepted-risk posture" },
+    { "id": "NFR2.3", "status": "OK", "target": "infrastructure-specification.md > Deployment > Storage strategy — DynamoDB PITR enabled, committed at this stage" },
+    { "id": "NFR2.4", "status": "N/A", "target": "No infrastructure decision — no secondary aggregator/failover provisioned, an accepted risk" },
+    { "id": "NFR3.1", "status": "OK", "target": "infrastructure-specification.md > Infrastructure Services > Webhook Lambda (Function URL auth NONE + signature verification), Secrets Manager" },
+    { "id": "NFR3.5", "status": "N/A", "target": "Process control (change-review trigger), not an infrastructure resource — see cicd-pipeline.md's production-promotion gates instead" },
+    { "id": "NFR4.1", "status": "OK", "target": "infrastructure-specification.md > Infrastructure Services > Donation DynamoDB table (AWS-managed encryption)" },
+    { "id": "NFR5.1", "status": "OK", "target": "infrastructure-specification.md > Infrastructure Services > Reconciliation Lambda (EventBridge Scheduler, rate(1 minute), querying the new statusIndex GSI for PENDING Donations — corrected at R-01, a bare Query against the base table's id-only key was never possible)" },
+    { "id": "NFR5.2", "status": "OK", "target": "infrastructure-specification.md > Infrastructure Services > Donation DynamoDB table (processedPaymentId conditional-write attribute) and Webhook Lambda (GetItem by id, resolved from order_id, not payment_id — corrected at R-02)" },
+    { "id": "NFR-SC.1", "status": "OK", "target": "infrastructure-specification.md > Deployment > Compute model (serverless Lambda + on-demand DynamoDB, both auto-scaling)" },
+    { "id": "NFR-OBS.1", "status": "OK", "target": "monitoring-design.md > Metrics & KPIs (custom EMF metrics)" },
+    { "id": "NFR-OBS.2", "status": "OK", "target": "monitoring-design.md > Logs & Tracing (structured JSON, 90-day retention)" },
+    { "id": "NFR-OBS.3", "status": "N/A", "target": "No tracing infrastructure — not applicable at this project's scale" },
+    { "id": "NFR-OBS.4", "status": "OK", "target": "monitoring-design.md > Alerts (SNS topic + email subscription)" }
+  ]
+}

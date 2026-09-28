@@ -1,0 +1,31 @@
+{
+  "stage": "infrastructure-design",
+  "unit": "reminder-unit",
+  "upstream_ids": [
+    "NFR-PERF.1", "NFR-PERF.2", "NFR-PERF.3",
+    "NFR2.1", "NFR2.2", "NFR2.3", "NFR2.4",
+    "NFR4.1",
+    "NFR-AUTHZ.1", "NFR-AUTHZ.2",
+    "NFR6.1",
+    "NFR-SC.1",
+    "NFR-OBS.1", "NFR-OBS.2", "NFR-OBS.3", "NFR-OBS.4"
+  ],
+  "coverage": [
+    { "id": "NFR-PERF.1", "status": "OK", "target": "infrastructure-specification.md > Deployment > Resource sizing (myReminders Lambda, 128MB/10s — corrected at this stage's review, R-01: myReminders needed Lambda-backing to call CreateSchedule, not a compute-free direct resolver)" },
+    { "id": "NFR-PERF.2", "status": "OK", "target": "infrastructure-specification.md > Deployment > Resource sizing (snoozeReminder/cancelReminder Lambdas, 128MB/5s)" },
+    { "id": "NFR-PERF.3", "status": "OK", "target": "infrastructure-specification.md > Deployment > Resource sizing (deliver-push/auto-clear Lambdas), Infrastructure Services > EventBridge Scheduler group" },
+    { "id": "NFR2.1", "status": "OK", "target": "infrastructure-specification.md > Deployment > Region/Environments" },
+    { "id": "NFR2.2", "status": "N/A", "target": "No infrastructure decision — no circuit breaker to provision, per NFR Design's own accepted-risk posture" },
+    { "id": "NFR2.3", "status": "OK", "target": "infrastructure-specification.md > Infrastructure Services > both DynamoDB tables (managed replication + encryption)" },
+    { "id": "NFR2.4", "status": "N/A", "target": "No infrastructure decision — no failover provisioned" },
+    { "id": "NFR4.1", "status": "OK", "target": "infrastructure-specification.md > Infrastructure Services > both DynamoDB tables (AWS-managed encryption)" },
+    { "id": "NFR-AUTHZ.1", "status": "N/A", "target": "No new infrastructure resource — guest-identity auth is schema-level configuration, not an infrastructure resource" },
+    { "id": "NFR-AUTHZ.2", "status": "N/A", "target": "Accepted risk, no infrastructure mechanism designed around it" },
+    { "id": "NFR6.1", "status": "N/A", "target": "Process control (change-review trigger), not an infrastructure resource — see cicd-pipeline.md's change-review trigger instead" },
+    { "id": "NFR-SC.1", "status": "OK", "target": "infrastructure-specification.md > Infrastructure Services > on-demand DynamoDB + auto-scaling Lambdas + EventBridge Scheduler group (2000-schedule capacity)" },
+    { "id": "NFR-OBS.1", "status": "OK", "target": "monitoring-design.md > Metrics & KPIs (reminder-delivery-delta, registered-device-count, active-reminder-count)" },
+    { "id": "NFR-OBS.2", "status": "OK", "target": "monitoring-design.md > Logs & Tracing (structured logging, new schedule-management log lines)" },
+    { "id": "NFR-OBS.3", "status": "OK", "target": "monitoring-design.md > Correlation (Post id/Reminder id carried through EventBridge payloads and logs)" },
+    { "id": "NFR-OBS.4", "status": "OK", "target": "monitoring-design.md > Alerts — explicitly none configured" }
+  ]
+}

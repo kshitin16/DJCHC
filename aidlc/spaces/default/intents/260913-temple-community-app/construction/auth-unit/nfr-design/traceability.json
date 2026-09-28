@@ -1,0 +1,29 @@
+{
+  "stage": "nfr-design",
+  "unit": "auth-unit",
+  "upstream_ids": [
+    "NFR1.1", "NFR1.2",
+    "NFR2.1", "NFR2.2", "NFR2.3", "NFR2.4",
+    "NFR3.1", "NFR3.2", "NFR3.3", "NFR3.4", "NFR3.5",
+    "NFR-SC.1",
+    "NFR-OBS.1", "NFR-OBS.2", "NFR-OBS.3", "NFR-OBS.4"
+  ],
+  "coverage": [
+    { "id": "NFR1.1", "status": "OK", "target": "performance-design.md > Sign-in round trip — delegated entirely to Cognito/Google, loading indicator on tap" },
+    { "id": "NFR1.2", "status": "OK", "target": "performance-design.md > Admin-check latency — in-memory JWT claim read, no I/O" },
+    { "id": "NFR2.1", "status": "OK", "target": "reliability-design.md > best-effort availability, no independent SLO" },
+    { "id": "NFR2.2", "status": "OK", "target": "reliability-design.md > no circuit breaker, no failover — accepted per Q1" },
+    { "id": "NFR2.3", "status": "OK", "target": "reliability-design.md > Cognito-managed durability, no project-level backup" },
+    { "id": "NFR2.4", "status": "OK", "target": "reliability-design.md > no RTO/RPO target, Cognito regional outage accepted as undesigned-around risk" },
+    { "id": "NFR3.1", "status": "OK", "target": "security-design.md > Authentication architecture (public App Client, PKCE, token lifetimes)" },
+    { "id": "NFR3.2", "status": "OK", "target": "security-design.md > Authorization architecture (Cognito Groups, group-claim configuration)" },
+    { "id": "NFR3.3", "status": "OK", "target": "security-design.md > Encryption design (Cognito-managed at-rest, TLS in-transit)" },
+    { "id": "NFR3.4", "status": "OK", "target": "security-design.md > Threat model realization — corrected at R-01/R-02 to accurately map Spoofing to short-lived tokens+TLS (not PKCE), then at R-03 to walk all 6 STRIDE categories the upstream table lists, including Elevation of Privilege" },
+    { "id": "NFR3.5", "status": "OK", "target": "security-design.md > Process controls — access-boundary and change-review are code-organization/process conventions, not infrastructure design decisions, but stated explicitly here for traceability completeness" },
+    { "id": "NFR-SC.1", "status": "OK", "target": "scalability-design.md > no scaling architecture needed, Cognito is fully managed" },
+    { "id": "NFR-OBS.1", "status": "OK", "target": "observability-design.md > Amplify Auth Hub events forwarded to existing client-side metrics sink" },
+    { "id": "NFR-OBS.2", "status": "OK", "target": "observability-design.md > structured logging per NFR-OBS.2's existing spec" },
+    { "id": "NFR-OBS.3", "status": "OK", "target": "observability-design.md > not applicable, no internal hop to trace" },
+    { "id": "NFR-OBS.4", "status": "OK", "target": "observability-design.md > no alerting configured" }
+  ]
+}

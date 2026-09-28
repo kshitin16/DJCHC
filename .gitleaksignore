@@ -1,0 +1,33 @@
+# gitleaks false-positive allowlist.
+#
+# Every entry below was manually reviewed before being added — see README.md,
+# "Repository hygiene", and the commit that introduced this file. Do not add an
+# entry here without that same review; this file exists to keep the mandated
+# pre-commit secret scan (project.md / team.md Q13) meaningful, not to silence it.
+#
+# aidlc-wave-memory bookkeeping tags: SHA-256 content fingerprints the AI-DLC
+# engine writes into stage diary files to deduplicate memory entries across
+# runs (e.g. `<!-- aidlc-wave-memory:auth-unit:<hash> -->`). High-entropy hex
+# strings trip gitleaks' generic-api-key heuristic; they are not credentials.
+aidlc/spaces/default/intents/260913-temple-community-app/construction/nfr-design/memory.md:generic-api-key:20
+aidlc/spaces/default/intents/260913-temple-community-app/construction/nfr-design/memory.md:generic-api-key:24
+aidlc/spaces/default/intents/260913-temple-community-app/construction/infrastructure-design/memory.md:generic-api-key:9
+aidlc/spaces/default/intents/260913-temple-community-app/construction/infrastructure-design/memory.md:generic-api-key:40
+aidlc/spaces/default/intents/260913-temple-community-app/construction/functional-design/memory.md:generic-api-key:9
+aidlc/spaces/default/intents/260913-temple-community-app/construction/functional-design/memory.md:generic-api-key:48
+aidlc/spaces/default/intents/260913-temple-community-app/construction/functional-design/memory.md:generic-api-key:88
+aidlc/spaces/default/intents/260913-temple-community-app/construction/functional-design/memory.md:generic-api-key:115
+aidlc/spaces/default/intents/260913-temple-community-app/construction/functional-design/memory.md:generic-api-key:149
+
+# Design prose explaining that the Cognito App Client is PUBLIC and has no
+# client secret (auth-unit/nfr-design/security-design.md). The word "secret"
+# next to a high-entropy nearby string (the OAuth flow description) trips the
+# same heuristic. No credential is present — the paragraph's whole point is
+# that none exists.
+aidlc/spaces/default/intents/260913-temple-community-app/construction/auth-unit/nfr-design/security-design.md:generic-api-key:13
+
+# Vendored third-party example code pulled in by CocoaPods/SPM under build/
+# (git-ignored, never committed) — a Firebase client apiKey from the
+# firebase_messaging package's own bundled example app, not this project's.
+build/ios/SourcePackages/firebase_messaging-16.7.0/example/bundled-service-worker/firebase-messaging-sw.ts:gcp-api-key:33
+build/ios/SourcePackages/firebase_messaging-16.7.0/example/web/firebase-messaging-sw.js:gcp-api-key:17

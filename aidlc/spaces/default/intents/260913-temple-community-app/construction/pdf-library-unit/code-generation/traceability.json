@@ -1,0 +1,40 @@
+{
+  "stage": "code-generation",
+  "unit": "pdf-library-unit",
+  "upstream_ids": [
+    "BR6.1", "BR6.2", "BR6.3", "BR6.4", "BR6.5",
+    "NFR-PERF.1", "NFR-PERF.2", "NFR-PERF.3",
+    "NFR2.1", "NFR2.2", "NFR2.3", "NFR2.4",
+    "NFR-SEC.1", "NFR-SEC.1.1", "NFR-SEC.1.2", "NFR-SEC.1.3",
+    "NFR4.1",
+    "NFR6.1", "NFR-AUTHZ",
+    "NFR-SC.1",
+    "NFR-OBS.1", "NFR-OBS.2", "NFR-OBS.3", "NFR-OBS.4"
+  ],
+  "coverage": [
+    { "id": "BR6.1", "status": "OK", "target": "amplify/functions/document-shared/validation.ts" },
+    { "id": "BR6.2", "status": "OK", "target": "amplify/functions/document-api/handler.ts" },
+    { "id": "BR6.3", "status": "OK", "target": "amplify/data/resource.ts" },
+    { "id": "BR6.4", "status": "OK", "target": "amplify/functions/document-api/handler.ts" },
+    { "id": "BR6.5", "status": "OK", "target": "amplify/data/resource.ts" },
+    { "id": "NFR-PERF.1", "status": "OK", "target": "amplify/functions/document-shared/document-repository.ts" },
+    { "id": "NFR-PERF.2", "status": "OK", "target": "amplify/functions/document-shared/s3-adapter.ts" },
+    { "id": "NFR-PERF.3", "status": "OK", "target": "amplify/functions/document-api/handler.ts" },
+    { "id": "NFR2.1", "status": "N/A", "target": "Best-effort availability inherited from S3/DynamoDB/AppSync; no code" },
+    { "id": "NFR2.2", "status": "N/A", "target": "No resilience pattern designed beyond client error+retry (flutter-app-unit)" },
+    { "id": "NFR2.3", "status": "OK", "target": "amplify/backend.ts" },
+    { "id": "NFR2.4", "status": "N/A", "target": "No failover designed (reliability-design.md accepted risk)" },
+    { "id": "NFR-SEC.1", "status": "OK", "target": "amplify/backend.ts" },
+    { "id": "NFR-SEC.1.1", "status": "OK", "target": "amplify/functions/document-shared/constants.ts" },
+    { "id": "NFR-SEC.1.2", "status": "OK", "target": "amplify/backend.ts" },
+    { "id": "NFR-SEC.1.3", "status": "N/A", "target": "Accepted residual content-substitution risk within the 15-minute upload window; no code mitigates it by design (security-design.md)" },
+    { "id": "NFR4.1", "status": "OK", "target": "amplify/backend.ts" },
+    { "id": "NFR6.1", "status": "OK", "target": "README.md" },
+    { "id": "NFR-AUTHZ", "status": "OK", "target": "README.md" },
+    { "id": "NFR-SC.1", "status": "OK", "target": "amplify/data/resource.ts" },
+    { "id": "NFR-OBS.1", "status": "Deferred", "target": "Custom per-category document-count metric deferred (plan-declared); standard Lambda/AppSync CloudWatch metrics exist by default" },
+    { "id": "NFR-OBS.2", "status": "OK", "target": "amplify/functions/document-api/handler.ts" },
+    { "id": "NFR-OBS.3", "status": "N/A", "target": "Tracing not applicable per observability-design.md" },
+    { "id": "NFR-OBS.4", "status": "N/A", "target": "No alerting configured by design (observability-design.md)" }
+  ]
+}

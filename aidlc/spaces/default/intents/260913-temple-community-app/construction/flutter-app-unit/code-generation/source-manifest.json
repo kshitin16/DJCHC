@@ -1,0 +1,19 @@
+{
+  "stage": "code-generation",
+  "unit": "flutter-app-unit",
+  "version": 1,
+  "writes": [
+    { "path": "lib/" },
+    { "path": "test/" },
+    { "path": "integration_test/" },
+    { "path": "tool/" },
+    { "path": "android/" },
+    { "path": "ios/" },
+    { "path": "pubspec.yaml" },
+    { "path": "pubspec.lock" },
+    { "path": "analysis_options.yaml" },
+    { "path": ".metadata" },
+    { "path": ".gitignore" },
+    { "path": "README.md" }
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "stage": "nfr-requirements",
+  "unit": "auth-unit",
+  "upstream_ids": ["NFR1", "NFR2", "NFR3", "NFR4", "NFR5", "NFR6", "NFR7", "NFR8"],
+  "coverage": [
+    { "id": "NFR1", "status": "OK", "target": "NFR1.1, NFR1.2 — AuthUnit's sign-in and admin-check latency targets, minted under NFR1's own sub-ID namespace per the stage's ID-inheritance convention (corrected at this stage's review, R-03; previously mismarked N/A while still using NFR1's numbering, which was self-contradictory)" },
+    { "id": "NFR2", "status": "OK", "target": "NFR2.1, NFR2.2, NFR2.3, NFR2.4" },
+    { "id": "NFR3", "status": "N/A", "target": "NFR3 (payment-data handling) belongs to donation-unit; AuthUnit has no payment surface" },
+    { "id": "NFR4", "status": "OK", "target": "NFR3.3 (data protection covers personal-data encryption at rest/in transit)" },
+    { "id": "NFR5", "status": "N/A", "target": "NFR5 (payment reconciliation) belongs to donation-unit" },
+    { "id": "NFR6", "status": "OK", "target": "NFR3.5 (services/-layer access boundary and mandatory self-review before merging sign-in/permission changes) — corrected at this stage's review, R-02; previously pointed at NFR3.2, which covers only the authorization/RBAC model and did not substantively address either half of NFR6" },
+    { "id": "NFR7", "status": "N/A", "target": "Accessibility (WCAG AA baseline) is a UI-rendering concern owned by flutter-app-unit; AuthUnit has no UI of its own beyond invoking Cognito's hosted UI" },
+    { "id": "NFR8", "status": "N/A", "target": "Testing methodology/coverage floor is a cross-cutting Build and Test concern, not a Unit-level NFR target" }
+  ],
+  "note": "scalability-requirements.md (NFR-SC.1) and observability-requirements.md (NFR-OBS.1-4) are intentionally outside the NFR1-NFR8 inheritance chain above: inception's requirements.md defines no scalability or observability NFR for this project, so both files use Unit-local IDs rather than a minted inception sub-ID (added at this stage's review, R-04)."
+}

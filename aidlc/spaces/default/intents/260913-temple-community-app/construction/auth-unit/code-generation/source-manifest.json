@@ -1,0 +1,55 @@
+{
+  "stage": "code-generation",
+  "unit": "auth-unit",
+  "version": 1,
+  "writes": [
+    {
+      "path": ".gitignore"
+    },
+    {
+      "path": "package.json"
+    },
+    {
+      "path": "package-lock.json"
+    },
+    {
+      "path": "tsconfig.json"
+    },
+    {
+      "path": "jest.config.ts"
+    },
+    {
+      "path": "eslint.config.js"
+    },
+    {
+      "path": ".prettierrc"
+    },
+    {
+      "path": ".prettierignore"
+    },
+    {
+      "path": ".pre-commit-config.yaml"
+    },
+    {
+      "path": "README.md"
+    },
+    {
+      "path": "amplify/package.json"
+    },
+    {
+      "path": "amplify/backend.ts"
+    },
+    {
+      "path": "amplify/backend.test.ts"
+    },
+    {
+      "path": "amplify/auth/resource.ts"
+    },
+    {
+      "path": "amplify/auth/token-policy.ts"
+    },
+    {
+      "path": "amplify/auth/resource.test.ts"
+    }
+  ]
+}

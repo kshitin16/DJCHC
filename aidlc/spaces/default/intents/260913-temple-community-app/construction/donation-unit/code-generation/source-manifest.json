@@ -1,0 +1,100 @@
+{
+  "stage": "code-generation",
+  "unit": "donation-unit",
+  "version": 1,
+  "writes": [
+    {
+      "path": "package.json"
+    },
+    {
+      "path": "package-lock.json"
+    },
+    {
+      "path": "jest.config.ts"
+    },
+    {
+      "path": "README.md"
+    },
+    {
+      "path": "amplify/backend.ts"
+    },
+    {
+      "path": "amplify/donations-flag.ts"
+    },
+    {
+      "path": "amplify/data/resource.ts"
+    },
+    {
+      "path": "amplify/data/donation-schema.test.ts"
+    },
+    {
+      "path": "amplify/functions/donation-shared/types.ts"
+    },
+    {
+      "path": "amplify/functions/donation-shared/errors.ts"
+    },
+    {
+      "path": "amplify/functions/donation-shared/logging.ts"
+    },
+    {
+      "path": "amplify/functions/donation-shared/logging.test.ts"
+    },
+    {
+      "path": "amplify/functions/donation-shared/donation-repository.ts"
+    },
+    {
+      "path": "amplify/functions/donation-shared/donation-repository.test.ts"
+    },
+    {
+      "path": "amplify/functions/donation-shared/validation.ts"
+    },
+    {
+      "path": "amplify/functions/donation-shared/validation.test.ts"
+    },
+    {
+      "path": "amplify/functions/donation-shared/aggregator-adapter.ts"
+    },
+    {
+      "path": "amplify/functions/donation-shared/aggregator-adapter.test.ts"
+    },
+    {
+      "path": "amplify/functions/donation-shared/reconciliation.ts"
+    },
+    {
+      "path": "amplify/functions/donation-shared/reconciliation.test.ts"
+    },
+    {
+      "path": "amplify/functions/donation-shared/flag.ts"
+    },
+    {
+      "path": "amplify/functions/donation-shared/flag.test.ts"
+    },
+    {
+      "path": "amplify/functions/donation-api/resource.ts"
+    },
+    {
+      "path": "amplify/functions/donation-api/handler.ts"
+    },
+    {
+      "path": "amplify/functions/donation-api/handler.test.ts"
+    },
+    {
+      "path": "amplify/functions/donation-webhook/resource.ts"
+    },
+    {
+      "path": "amplify/functions/donation-webhook/handler.ts"
+    },
+    {
+      "path": "amplify/functions/donation-webhook/handler.test.ts"
+    },
+    {
+      "path": "amplify/functions/donation-reconciler/resource.ts"
+    },
+    {
+      "path": "amplify/functions/donation-reconciler/handler.ts"
+    },
+    {
+      "path": "amplify/functions/donation-reconciler/handler.test.ts"
+    }
+  ]
+}

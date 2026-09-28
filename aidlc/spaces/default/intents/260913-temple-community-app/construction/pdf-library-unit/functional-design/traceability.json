@@ -1,0 +1,13 @@
+{
+  "stage": "functional-design",
+  "unit": "pdf-library-unit",
+  "upstream_ids": ["FR6.1", "FR6.2"],
+  "coverage": [
+    { "id": "FR6.1", "status": "OK", "target": "BR6.5" },
+    { "id": "FR6.2", "status": "OK", "target": "BR6.1, BR6.3" }
+  ],
+  "reverse": [
+    { "id": "BR6.2", "status": "N/A", "target": "Functional Design Q2 clarification — file-type/size constraint, not derived from a pre-existing FR" },
+    { "id": "BR6.4", "status": "N/A", "target": "Functional Design Q3 clarification — delete semantics, not derived from a pre-existing FR" }
+  ]
+}

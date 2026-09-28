@@ -1,0 +1,34 @@
+{
+  "stage": "infrastructure-design",
+  "unit": "pdf-library-unit",
+  "upstream_ids": [
+    "NFR-PERF.1", "NFR-PERF.2", "NFR-PERF.3",
+    "NFR2.1", "NFR2.2", "NFR2.3", "NFR2.4",
+    "NFR-SEC.1", "NFR-SEC.1.1", "NFR-SEC.1.2", "NFR-SEC.1.3",
+    "NFR4.1",
+    "NFR6.1", "NFR-AUTHZ",
+    "NFR-SC.1",
+    "NFR-OBS.1", "NFR-OBS.2", "NFR-OBS.3", "NFR-OBS.4"
+  ],
+  "coverage": [
+    { "id": "NFR-PERF.1", "status": "N/A", "target": "No infrastructure decision — direct DynamoDB query, no compute to size (listDocuments only)" },
+    { "id": "NFR-PERF.2", "status": "OK", "target": "infrastructure-specification.md > Infrastructure Services > Document Lambda (128MB/10s — corrected at this stage's review R-01/R-02, a Lambda-backed resolver for all four S3-touching operations, not a compute-free operation)" },
+    { "id": "NFR-PERF.3", "status": "OK", "target": "infrastructure-specification.md > Infrastructure Services > Document Lambda (same sizing; the actual file transfer still bypasses this Lambda, only the signing/verification/deletion calls run in it — corrected at R-01/R-02)" },
+    { "id": "NFR2.1", "status": "OK", "target": "infrastructure-specification.md > Deployment > Region/Environments" },
+    { "id": "NFR2.2", "status": "N/A", "target": "No infrastructure decision — no resilience pattern beyond existing error+retry" },
+    { "id": "NFR2.3", "status": "OK", "target": "infrastructure-specification.md > Infrastructure Services > S3 bucket (11-nines durability) and Document DynamoDB table (managed replication)" },
+    { "id": "NFR2.4", "status": "N/A", "target": "No infrastructure decision — no failover provisioned" },
+    { "id": "NFR-SEC.1", "status": "OK", "target": "infrastructure-specification.md > Infrastructure Services > S3 bucket (BlockPublicAccess.BLOCK_ALL) and Pre-signed URL generation (expirations)" },
+    { "id": "NFR-SEC.1.1", "status": "OK", "target": "infrastructure-specification.md > Infrastructure Services > Pre-signed URL generation (15-minute upload URL)" },
+    { "id": "NFR-SEC.1.2", "status": "OK", "target": "infrastructure-specification.md > Infrastructure Services > S3 bucket (BlockPublicAccess.BLOCK_ALL)" },
+    { "id": "NFR-SEC.1.3", "status": "OK", "target": "infrastructure-specification.md > Infrastructure Services > Pre-signed URL generation (1-hour download URL)" },
+    { "id": "NFR4.1", "status": "OK", "target": "infrastructure-specification.md > Infrastructure Services > S3 bucket (SSE-S3) and Document DynamoDB table (AWS-managed encryption)" },
+    { "id": "NFR6.1", "status": "N/A", "target": "Process control (change-review trigger, access-boundary rule), not an infrastructure resource" },
+    { "id": "NFR-AUTHZ", "status": "N/A", "target": "No new infrastructure resource — resolver-level cognito:groups check reads the shared Cognito User Pool (Shared Infrastructure table), owned by auth-unit" },
+    { "id": "NFR-SC.1", "status": "OK", "target": "infrastructure-specification.md > Infrastructure Services > S3 + Document DynamoDB table (both on-demand/unlimited, no capacity planning)" },
+    { "id": "NFR-OBS.1", "status": "OK", "target": "monitoring-design.md > Metrics & KPIs (custom document-count-by-category metric)" },
+    { "id": "NFR-OBS.2", "status": "OK", "target": "monitoring-design.md > Logs & Tracing (structured logging per existing spec)" },
+    { "id": "NFR-OBS.3", "status": "N/A", "target": "No tracing infrastructure — not applicable" },
+    { "id": "NFR-OBS.4", "status": "OK", "target": "monitoring-design.md > Alerts — explicitly none configured" }
+  ]
+}
