@@ -60,3 +60,12 @@ All paths workspace-relative. 31 entries in `source-manifest.json`.
 - **Settlement write has no status guard** — `applySettlement` conditions only on `processedPaymentId`, exactly as the approved security design specifies. Once real: a later webhook with a *different* `payment_id` on a SUCCEEDED RECURRING mandate (a periodic charge) or a CANCELLED one would rewrite `status`. Tied to `entities.md`'s open assumption that periodic charges are not modeled. **Resolve when the aggregator's recurring API is known**, before flipping the flag.
 - `coverage/` should be in `.gitignore` — it is (auth-unit's block); the developer's run wrote the directory, which is ignored.
 - `npm audit`: the same 20 transitive advisories under `@aws-amplify/backend-cli`; none introduced here.
+
+## Re-verification (2026-09-28)
+
+Same stage-attempt reset as auth-unit (see that Unit's code-summary.md). Re-ran Plan Approval under the current attempt and verified the existing implementation directly rather than re-dispatching generation on unchanged code:
+
+- `npm run test:donation` (scoped to `amplify/data` + `amplify/functions/donation`, which sweeps in five other units' shared-schema tests by design): 23/23 suites, 127/127 tests passing.
+- `npm run typecheck`: clean.
+- `npm run lint`: clean (using the `build/`/`android/`/`ios/` ignores added during auth-unit's re-verification pass).
+- Repository content is unchanged: no `amplify/data/**` or `amplify/functions/donation*/**` file was touched.

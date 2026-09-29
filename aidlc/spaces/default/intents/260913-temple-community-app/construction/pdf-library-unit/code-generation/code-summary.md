@@ -55,3 +55,11 @@ Full backend build (no feature flag — later-release gating lives in the app's 
 - **flutter-app-unit's `pdf_service.dart`** must send exactly `Content-Type: application/pdf` on the pre-signed PUT (S3 returns 403 otherwise) and call the two public operations with `authorizationMode: identityPool` when signed out.
 - The permission surface added here (`backend.ts`, `data/resource.ts`, `storage/resource.ts`) is on the builder's self-review checklist (project.md Mandated).
 - `npm audit`: the same 20 transitive advisories under `@aws-amplify/backend-cli`; none introduced here.
+
+## Re-verification (2026-09-28)
+
+Same stage-attempt reset as auth-unit (see that Unit's code-summary.md). Re-ran Plan Approval under the current attempt and verified the existing implementation directly:
+
+- `npm run test:pdf`: 6/6 suites, 37/37 tests passing.
+- `npm run typecheck` / `npm run lint`: clean (verified once during this session's re-verification pass; unaffected by this Unit).
+- Repository content is unchanged: no `amplify/data/document*/**`, `amplify/functions/document-*/**`, or `amplify/storage/**` file was touched.

@@ -11,7 +11,8 @@
       "Grep",
       "Task",
       "WebSearch",
-      "Bash(aidlc engine *)"
+      "Bash(aidlc engine *)",
+      "Bash(git ls-files:*)"
     ]
   },
   "statusLine": {

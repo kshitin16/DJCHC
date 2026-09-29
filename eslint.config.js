@@ -14,6 +14,13 @@ export default defineConfig([
     'aidlc/',
     '.claude/',
     'amplify_outputs*',
+    // Flutter build output and platform scaffolds (flutter-app-unit) — vendored
+    // third-party JS/TS from CocoaPods/SPM packages lands under build/ once
+    // `flutter test`/`flutter build` has run locally; this backend's ESLint
+    // config has no business linting it.
+    'build/',
+    'android/',
+    'ios/',
   ]),
   ...tseslint.configs.recommended,
   prettier,

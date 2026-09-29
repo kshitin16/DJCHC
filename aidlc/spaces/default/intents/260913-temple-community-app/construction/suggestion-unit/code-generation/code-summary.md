@@ -54,3 +54,11 @@ Full build of the suggestion box (first release). Two Lambdas, one direct resolv
 - Confirm the TTL formula preference above (plan vs. security design literal) — cosmetic.
 - The permission block added to `amplify/backend.ts` is on the builder's self-review checklist (project.md Mandated).
 - Full-suite Jest runs now take ~5 minutes on this machine (ESM + ts-jest); CI should allow for it.
+
+## Re-verification (2026-09-28)
+
+Same stage-attempt reset as auth-unit (see that Unit's code-summary.md). Re-ran Plan Approval under the current attempt and verified the existing implementation directly:
+
+- `npm run test:suggestion`: 7/7 suites, 38/38 tests passing.
+- `npm run typecheck` / `npm run lint`: clean (verified once during this session's re-verification pass; unaffected by this Unit).
+- Repository content is unchanged: no `amplify/data/suggestion*/**` or `amplify/functions/{suggestion-shared,submit-suggestion,all-suggestions}/**` file was touched.

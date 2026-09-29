@@ -17,8 +17,8 @@
 - **Stages to Skip**: 1.2 (market-research), 1.5 (team-formation), 2.1 (reverse-engineering), 2.4 (user-stories), 2.5 (refined-mockups), 2.9 (delivery-planning), 4.6 (performance-validation), 4.7 (feedback-optimization)
 - **Depth**: Standard
 - **Test Strategy**: Standard
-- **Review Override**: 
-- **Change Control**: strict (set by you)
+- **Review Override**: advisory
+- **Change Control**: relaxed (set by you)
 
 ## Workspace State
 - **Project Root**: .
@@ -38,9 +38,23 @@
 
 
 
-- **Active Unit**: flutter-app-unit
 
-- **Unit State**: in-progress
+
+
+
+
+
+
+
+
+
+
+
+
+
+- **Parked**: 2026-09-29T15:44:35Z
+
+- **Parked At Stage**: code-generation
 
 ## Phase Progress
 <!-- Status values: Pending, Active, Verified, Skipped -->
@@ -85,7 +99,7 @@ Per unit: [TBD]
 - [x] nfr-requirements — EXECUTE
 - [x] nfr-design — EXECUTE
 - [x] infrastructure-design — EXECUTE
-- [R] code-generation — EXECUTE
+- [-] code-generation — EXECUTE
 - [ ] build-and-test — EXECUTE
 - [ ] ci-pipeline — EXECUTE
 
@@ -103,7 +117,7 @@ Per unit: [TBD]
 - **Current Stage**: code-generation
 - **Next Stage**: build-and-test
 - **Status**: Running
-- **Last Updated**: 2026-09-28T12:40:15Z
+- **Last Updated**: 2026-09-29T15:44:35Z
 
 ## Session Resume Point
 - **Last Completed Stage**: infrastructure-design

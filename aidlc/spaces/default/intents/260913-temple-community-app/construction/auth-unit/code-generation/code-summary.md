@@ -60,3 +60,12 @@ Record directory: `source-manifest.json` (18 entries, above) and this file; `tra
 - Before the first `ampx sandbox`: set the two Google secrets, register the sandbox Cognito domain's `/oauth2/idpresponse` on the Google OAuth client (README).
 - Run `pre-commit install` at the workspace root; enable GitHub secret scanning / push protection / Dependabot when the repository is created.
 - Self-review `amplify/auth/**` and `amplify/backend.ts` before the Bolt merges (project.md Mandated).
+
+## Re-verification (2026-09-28)
+
+The Sep 20 rejection of reminder-unit's gate reset the whole code-generation stage attempt, invalidating this Unit's Plan Approval receipt even though its code was already correct and unchanged. Re-ran Plan Approval under the current attempt (fresh fingerprint, human re-confirmed) and verified the existing implementation directly rather than re-dispatching generation on unchanged code:
+
+- `npm run test:auth`: 8/8 passing (2 suites: `amplify/auth/resource.test.ts`, `amplify/backend.test.ts`).
+- `npm run typecheck`: clean.
+- `npm run lint`: found and fixed a real config gap — `eslint.config.js` had no `build/`/`android/`/`ios/` in `globalIgnores`, so once flutter-app-unit's `flutter test`/`analyze` populated `build/` with vendored third-party JS (CocoaPods/SPM package internals), this backend's ESLint swept it in (2026 errors, none of them this project's code). Added the three ignores; `npm run lint` is now clean (0 errors).
+- Repository content is unchanged: no `amplify/auth/**` or `amplify/backend.ts` file was touched.

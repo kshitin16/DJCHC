@@ -52,3 +52,11 @@ Built in two passes. The first pass implemented the whole design and discovered 
 - **reminder-unit** must reach `listPosts` from its `myReminders` Lambda via `allow.resource(fn)` on the schema (recorded for its plan).
 - **flutter-app-unit** calls `listPosts` with `authorizationMode: identityPool` when signed out.
 - Infrastructure Design note for feed-unit R-01 was applied (admin-gated reads named).
+
+## Re-verification (2026-09-28)
+
+Same stage-attempt reset as auth-unit (see that Unit's code-summary.md). Re-ran Plan Approval under the current attempt and verified the existing implementation directly:
+
+- `npm run test:feed`: 10/10 suites, 49/49 tests passing.
+- `npm run typecheck` / `npm run lint`: clean (verified once during this session's re-verification pass; unaffected by this Unit).
+- Repository content is unchanged: no `amplify/data/post*/**` or `amplify/functions/feed-api/**` file was touched.

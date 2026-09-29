@@ -66,3 +66,16 @@ Full build of the calendar reminders module (first release, guest-identity only 
 - Amendment notes owed to `reminder-unit/infrastructure-design/infrastructure-specification.md`: four Lambdas instead of six; FCM service-account secret lives in SSM SecureString via `secret()` (same SSM-vs-Secrets-Manager note as auth/donation).
 - One-time setup before the first sandbox run: `npx ampx sandbox secret set REMINDER_FCM_SERVICE_ACCOUNT` with the Firebase service-account JSON; the APNs key upload is flutter-app-unit's item.
 - flutter-app-unit: `services/reminder_service.dart`, the Calendar screen, OS push permission, and the sandbox integration test.
+
+## Re-verification (2026-09-28)
+
+This is the Unit whose gate rejection on 2026-09-20 (review finding R-01, Major — the schema-wide `allow.resource(reminderApi).to(['query'])` grant would have exposed the three admin-only Post operations to the Lambda's IAM principal, since `enableIamAuthorizationMode: true` bypasses `@auth` rules for IAM callers) reset the whole stage's Plan Approval evidence, including the five other backend Units' already-correct receipts (see auth-unit's code-summary.md for the general explanation).
+
+The R-01 fix itself was already applied to the actual code before this session (a single-field `appsync:GraphQL` grant on `types/Query/fields/listPosts` in `amplify/backend.ts`), but **the plan document (`code-generation-plan.md` Step 3.2) still described the rejected schema-wide mechanism** — it was never corrected to match. Fixed directly in this pass (project.md Correction: fix a stale upstream artifact with an amendment note rather than letting drift stand) — Step 3.2's text now describes the actual field-scoped grant, and a new Known Deviations entry documents the R-01 finding and its fix. Re-verified the fix is real, not just documented:
+
+- `grep -n "appsync:GraphQL" amplify/backend.ts`: confirms the grant is scoped to the single field ARN, not the schema.
+- `grep -rn "allow.resource" amplify/` (excluding tests): every hit is a comment explaining why the schema-wide helper was avoided; no actual usage anywhere in the backend.
+- `npm run test:reminder`: 13/13 suites, 72/72 tests passing.
+- `npm test` (whole backend, all Units): 48/48 suites, 265/265 tests passing — a full cross-check since this was the last backend Unit's re-verification.
+- `npm run typecheck` / `npm run lint`: clean.
+- No `amplify/functions/{reminder-*,deliver-push,auto-clear}/**` or `amplify/data/reminder*.ts` file was touched; only the plan document and this summary were edited.
