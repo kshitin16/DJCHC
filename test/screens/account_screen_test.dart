@@ -57,6 +57,53 @@ void main() {
     expect(reminders.log.isEmpty, isTrue);
   });
 
+  testWidgets('shows the display name above the email when Google sent both', (
+    tester,
+  ) async {
+    authGateway.setSession(
+      aSession(
+        signedIn: true,
+        email: 'devotee@example.test',
+        givenName: 'Kshitindra',
+        familyName: 'Jain',
+      ),
+    );
+    await authState.refresh();
+    await pumpAppAndSettle(tester, screen(), strings: strings);
+
+    expect(find.byKey(AccountScreen.nameKey), findsOneWidget);
+    expect(find.text('Kshitindra Jain'), findsOneWidget);
+    // The email stays visible alongside it, not replaced by the name.
+    expect(find.text('devotee@example.test'), findsOneWidget);
+  });
+
+  testWidgets(
+    'renders a single-word Google name without a trailing space or a gap',
+    (tester) async {
+      // Google does not guarantee `family_name`. An account whose name is one
+      // word sends `given_name` alone, and joining blindly would render
+      // "Kshitindra " or "Kshitindra null".
+      authGateway.setSession(
+        aSession(signedIn: true, givenName: 'Kshitindra'),
+      );
+      await authState.refresh();
+      await pumpAppAndSettle(tester, screen(), strings: strings);
+
+      expect(find.text('Kshitindra'), findsOneWidget);
+    },
+  );
+
+  testWidgets('omits the name row entirely when Google sent no name', (
+    tester,
+  ) async {
+    // The default fixture has neither claim, which is the case for any account
+    // that has not granted the profile scope.
+    await pumpAppAndSettle(tester, screen(), strings: strings);
+
+    expect(find.byKey(AccountScreen.nameKey), findsNothing);
+    expect(find.byKey(AccountScreen.emailKey), findsOneWidget);
+  });
+
   testWidgets('the language toggle switches every string on screen', (
     tester,
   ) async {

@@ -82,6 +82,8 @@ class SessionInfo {
     required this.groups,
     this.sub,
     this.email,
+    this.givenName,
+    this.familyName,
     this.identityId,
   });
 
@@ -98,6 +100,31 @@ class SessionInfo {
 
   /// The user's email from the ID token; `null` when signed out.
   final String? email;
+
+  /// Google's `given_name` claim, mapped into the pool by auth-unit's
+  /// `attributeMapping`; `null` when signed out.
+  ///
+  /// Nullable on purpose even when signed in: Google does not guarantee the
+  /// claim. An account whose name is a single word sends `given_name` with no
+  /// `family_name`, so neither field may be assumed present.
+  final String? givenName;
+
+  /// Google's `family_name` claim; `null` when signed out OR when the Google
+  /// account has no surname. See [givenName].
+  final String? familyName;
+
+  /// The signed-in user's display name, or `null` when nothing usable exists.
+  ///
+  /// Joins whichever name parts are present rather than assuming both, so a
+  /// single-word Google account renders as that one word instead of an
+  /// orphaned space or a literal "null".
+  String? get displayName {
+    final parts = [
+      givenName,
+      familyName,
+    ].where((p) => p != null && p.trim().isNotEmpty).map((p) => p!.trim());
+    return parts.isEmpty ? null : parts.join(' ');
+  }
 
   /// The `cognito:groups` claim (Contract 2). Empty when signed out.
   final List<String> groups;
@@ -122,12 +149,22 @@ class SessionInfo {
       other.isSignedIn == isSignedIn &&
       other.sub == sub &&
       other.email == email &&
+      other.givenName == givenName &&
+      other.familyName == familyName &&
       other.identityId == identityId &&
       listEquals(other.groups, groups);
 
   @override
   int get hashCode =>
-      Object.hash(isSignedIn, sub, email, identityId, Object.hashAll(groups));
+      Object.hash(
+        isSignedIn,
+        sub,
+        email,
+        givenName,
+        familyName,
+        identityId,
+        Object.hashAll(groups),
+      );
 }
 
 /// A change in sign-in state, surfaced from Amplify's Hub.

@@ -67,8 +67,26 @@ export const authConfig = {
         // `profile` lets Cognito populate name attributes if ever wanted.
         scopes: ['openid', 'email', 'profile'],
         // Contract 1: Google's `email` claim becomes the Cognito `email` attribute.
+        //
+        // `givenName`/`familyName`/`emailVerified` added 2026-10-01, after the
+        // first real sign-in showed a user record holding only `email`, `sub`
+        // and the identity link. The `profile` scope above was already being
+        // requested — Google was sending the name and Cognito was discarding
+        // it, because a claim only reaches the user pool if it is mapped here.
+        //
+        // `emailVerified` matters beyond cosmetics: without it Cognito stores
+        // `email_verified: false` for a Google account Google has already
+        // verified, so any future flow that gates on a verified email would
+        // refuse every user.
+        //
+        // Cognito refreshes mapped attributes on each federated sign-in, so
+        // existing users backfill on their next login rather than needing a
+        // migration.
         attributeMapping: {
           email: 'email',
+          emailVerified: 'email_verified',
+          givenName: 'given_name',
+          familyName: 'family_name',
         },
       },
       // App-facing custom-URL-scheme redirects consumed by flutter-app-unit's
@@ -84,6 +102,18 @@ export const authConfig = {
     email: {
       required: true,
     },
+    // `givenName` / `familyName` are deliberately NOT declared here.
+    //
+    // They are STANDARD Cognito attributes and already exist on every user
+    // pool, so the `attributeMapping` above is all that is needed to populate
+    // them. Declaring them in this block makes Amplify attempt a schema
+    // change on the existing pool, which Cognito refuses with
+    // "Invalid AttributeDataType input" and fails the whole auth stack.
+    // Verified against a real deployment 2026-10-01.
+    //
+    // They are also left un-required on purpose: Google does not guarantee
+    // `family_name` — a single-word account name sends `given_name` only — so
+    // requiring it would make such an account unable to sign in at all.
   },
 } satisfies AuthConfig;
 

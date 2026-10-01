@@ -244,11 +244,17 @@ SessionInfo aSession({
   bool admin = false,
   String? sub = 'user-sub-1',
   String? email = 'devotee@example.test',
+  String? givenName,
+  String? familyName,
   String? identityId = 'ap-south-1:guest-identity-1',
 }) => SessionInfo(
   isSignedIn: signedIn,
   sub: signedIn ? sub : null,
   email: signedIn ? email : null,
+  // Default to absent, not to a name: Google does not guarantee either claim,
+  // so the nameless case is the one every caller gets unless it asks otherwise.
+  givenName: signedIn ? givenName : null,
+  familyName: signedIn ? familyName : null,
   groups: admin ? const ['Admin'] : const [],
   identityId: identityId,
 );

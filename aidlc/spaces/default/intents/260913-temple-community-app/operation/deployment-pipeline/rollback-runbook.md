@@ -50,6 +50,47 @@ app path carries the heavier manual checklist.
 | **Removing a field or operation** | **Not safely.** A shipped app version still calls it. See below |
 | **Data already written** | Never. A rollback reverts schema and code, not rows |
 
+### The one that strands you: a failed Cognito schema change
+
+**Added 2026-10-02, after hitting it on the first real environment.**
+
+This document's core instruction for a bad backend deploy — redeploy the
+previous commit — is right, but it is not always *sufficient*, and the gap is
+worth knowing before it matters.
+
+Amplify Gen2 now deploys through **CloudFormation Express Mode** by default, and
+Express Mode has automatic rollback **disabled**. A failed update therefore
+leaves the stack sitting in `UPDATE_FAILED` rather than reverting. If the
+failing change is one CloudFormation cannot undo, you are stuck:
+
+- `aws cloudformation rollback-stack` refuses outright: *"RollbackStack is not supported for stacks that were last updated using EXPRESS deployment mode and are in a failed state."*
+- Redeploying the previous commit **also fails**, because the nested stack is still wedged and the update is never attempted.
+- The `--no-express` flag on `ampx sandbox` does not suppress it.
+
+**A Cognito user-pool schema change is exactly such a change.** Attributes
+cannot be removed from a pool once added, so CloudFormation cannot reverse a
+failed attribute addition and cannot reconcile forward either. Observed
+verbatim: `Invalid AttributeDataType input`, repeated identically on three
+successive deploys including one with the original template.
+
+The only exit is to delete and recreate the stack.
+
+| Environment | What that costs |
+|---|---|
+| Sandbox | ~10 minutes. User records and group membership are lost and trivially recreated |
+| **`main` (production)** | **Every Cognito user record is destroyed.** Every devotee would have to sign in again, every `Admin` group membership would need re-adding, and anything keyed to a user's `sub` would be orphaned — `sub` is regenerated for a new pool |
+
+That last row is why this is in the runbook rather than a footnote. With one
+permanent environment, `main` *is* production, and a failed schema change there
+is not a ten-minute inconvenience.
+
+**Therefore:** treat any change under `userAttributes` or `attributeMapping` in
+`amplify/auth/resource.ts` as high-risk. Prove it in a sandbox first, every
+time, without exception. Note that `attributeMapping` alone is safe — it is
+provider configuration, not pool schema. It is `userAttributes` that rewrites
+the schema, and standard attributes such as `given_name` and `family_name`
+already exist on every pool and must **not** be declared there.
+
 ### The one that bites: contract removal
 
 Contract changes are additive by the ownership rules in `contract-summary.md`, and
