@@ -38,6 +38,24 @@ export const authConfig = {
     // `defineAuth` requires an email or phone sign-in attribute even for a
     // federation-only pool. The app never exposes email/password sign-in
     // (BR1.1: Google only) and self-registration is disabled in backend.ts.
+    //
+    // Side effect worth knowing about: because the pool declares this sign-in
+    // attribute, Amplify puts `COGNITO` into the App Client's
+    // `SupportedIdentityProviders` alongside `Google`, so the Cognito hosted UI
+    // still renders a username/password form. It is INERT, not a second way in:
+    // `applyTokenPolicy` (see ./token-policy) sets
+    // `AdminCreateUserConfig.AllowAdminCreateUserOnly = true`, so no native
+    // account can be self-registered, and no native account is ever created
+    // administratively — every user profile in this pool comes from the Google
+    // federation flow and therefore has no password to sign in with. The form
+    // has nothing to authenticate against.
+    //
+    // It is left in place rather than overridden because narrowing
+    // `supportedIdentityProviders` changes a sign-in surface, which is exactly
+    // the kind of change project.md's Mandated self-review rule covers; it was
+    // not in this Unit's approved plan. The app itself never shows the hosted UI
+    // login page — flutter-app-unit launches the Google provider directly — so
+    // the only way to see the form is to hand-craft a hosted-UI URL.
     email: true,
     externalProviders: {
       google: {

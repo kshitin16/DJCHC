@@ -303,4 +303,33 @@ describe('donation-unit: donation-api handler', () => {
       /unsupported operation/,
     );
   });
+
+  it('still hands the donor the real checkout when markPending fails, leaving a recoverable INITIATED row (F-3)', async () => {
+    const repo = fakeRepository();
+    repo.repository.markPending = async () => {
+      throw new DonationStateError('conditional write lost');
+    };
+    const agg = fakeAdapter();
+    const handler = createHandler({
+      repository: repo.repository,
+      adapter: agg.adapter,
+      env: { DONATIONS_ENABLED: 'true' },
+      now: () => NOW,
+      logger: silentLogger,
+    });
+
+    const result = (await handler(
+      anEvent('initiateDonation', { amount: 101, donationType: 'ONE_TIME' }),
+    )) as { donationId: string; checkoutUrl: string; checkoutReference: string };
+
+    // The checkout exists, so the donor gets it rather than an error.
+    expect(result).toEqual({
+      donationId: 'don-new',
+      checkoutUrl: 'https://checkout.example.test/session/xyz',
+      checkoutReference: 'ref-don-new',
+    });
+    expect(agg.calls).toEqual(['createCheckout']);
+    // The row stays INITIATED — settleable by the webhook, swept by the reconciler.
+    expect(repo.rows.get('don-new')?.status).toBe('INITIATED');
+  });
 });

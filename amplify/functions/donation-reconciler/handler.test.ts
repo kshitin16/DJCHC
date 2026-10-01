@@ -5,6 +5,7 @@
 import {
   confirmationWindowMs,
   createHandler,
+  initiatedSweepWindowMs,
   reconciliationPaymentKey,
   type DonationReconcilerDeps,
 } from './handler';
@@ -30,13 +31,34 @@ function aPending(
   };
 }
 
-function fakeRepository(pending: DonationRecord[], alreadySettled: string[] = []) {
-  const rows = new Map(pending.map((d) => [d.id, { ...d }]));
+function anInitiated(id: string, aggregatorTransactionId?: string): DonationRecord {
+  return {
+    id,
+    donorGoogleId: 'sub-donor',
+    amount: 100,
+    donationType: 'ONE_TIME',
+    status: 'INITIATED',
+    ...(aggregatorTransactionId ? { aggregatorTransactionId } : {}),
+    createdAt: '2026-09-14T09:00:00.000Z',
+    updatedAt: '2026-09-14T09:00:00.000Z',
+  };
+}
+
+function fakeRepository(
+  pending: DonationRecord[],
+  alreadySettled: string[] = [],
+  stuckInitiated: DonationRecord[] = [],
+) {
+  const rows = new Map([...pending, ...stuckInitiated].map((d) => [d.id, { ...d }]));
   const calls: Array<{ op: string; args: unknown[] }> = [];
   const repository: DonationReconcilerDeps['repository'] = {
     async queryPendingOlderThan(cutoff) {
       calls.push({ op: 'queryPendingOlderThan', args: [cutoff] });
-      return [...rows.values()];
+      return pending.map((d) => rows.get(d.id)!);
+    },
+    async queryInitiatedOlderThan(cutoff) {
+      calls.push({ op: 'queryInitiatedOlderThan', args: [cutoff] });
+      return stuckInitiated.map((d) => rows.get(d.id)!);
     },
     async applySettlement(id, status, paymentId) {
       calls.push({ op: 'applySettlement', args: [id, status, paymentId] });
@@ -84,7 +106,15 @@ describe('donation-unit: donation-reconciler handler', () => {
     const repo = fakeRepository([aPending('a')]);
     const agg = fakeAdapter({ order_a: 'captured' });
     const summary = await handlerWith(repo, agg, { DONATIONS_ENABLED: 'false' })();
-    expect(summary).toEqual({ enabled: false, scanned: 0, settled: 0, duplicates: 0, failed: 0 });
+    expect(summary).toEqual({
+      enabled: false,
+      scanned: 0,
+      settled: 0,
+      duplicates: 0,
+      failed: 0,
+      initiatedScanned: 0,
+      orphaned: 0,
+    });
     expect(repo.calls).toEqual([]);
     expect(agg.asked).toEqual([]);
   });
@@ -150,5 +180,50 @@ describe('donation-unit: donation-reconciler handler', () => {
       15 * 60_000,
     );
     expect(confirmationWindowMs({})).toBe(15 * 60_000);
+  });
+
+  it('reports a donation stuck INITIATED as an orphan instead of guessing its outcome (F-3, BR5.4)', async () => {
+    const repo = fakeRepository([], [], [anInitiated('stuck')]);
+    const agg = fakeAdapter({});
+
+    const summary = await handlerWith(repo, agg)();
+
+    expect(repo.calls).toEqual([
+      { op: 'queryPendingOlderThan', args: ['2026-09-16T09:45:00.000Z'] },
+      // now − 1440 minutes (the default orphan window)
+      { op: 'queryInitiatedOlderThan', args: ['2026-09-15T10:00:00.000Z'] },
+    ]);
+    // Never asked the aggregator (there is no reference) and never wrote.
+    expect(agg.asked).toEqual([]);
+    expect(repo.rows.get('stuck')?.status).toBe('INITIATED');
+    expect(summary).toMatchObject({ initiatedScanned: 1, orphaned: 1, settled: 0, failed: 0 });
+  });
+
+  it('reconciles a stuck INITIATED row that DOES carry an aggregator reference from the aggregator record (F-3)', async () => {
+    const repo = fakeRepository([], [], [anInitiated('half', 'order_half')]);
+    const agg = fakeAdapter({ order_half: 'captured' });
+
+    const summary = await handlerWith(repo, agg)();
+
+    expect(agg.asked).toEqual(['order_half']);
+    expect(repo.rows.get('half')?.status).toBe('SUCCEEDED');
+    expect(summary).toMatchObject({ initiatedScanned: 1, orphaned: 0, settled: 1 });
+  });
+
+  it('keeps reconciling PENDING rows when the orphan sweep query itself fails, and honours the configured orphan window', async () => {
+    const repo = fakeRepository([aPending('a')]);
+    repo.repository.queryInitiatedOlderThan = async () => {
+      throw new Error('index unavailable');
+    };
+    const summary = await handlerWith(repo, fakeAdapter({ order_a: 'captured' }))();
+
+    expect(repo.rows.get('a')?.status).toBe('SUCCEEDED');
+    expect(summary).toMatchObject({ settled: 1, initiatedScanned: 0, orphaned: 0 });
+
+    expect(initiatedSweepWindowMs({ DONATION_INITIATED_SWEEP_MINUTES: '30' })).toBe(30 * 60_000);
+    expect(initiatedSweepWindowMs({ DONATION_INITIATED_SWEEP_MINUTES: 'later' })).toBe(
+      1440 * 60_000,
+    );
+    expect(initiatedSweepWindowMs({})).toBe(1440 * 60_000);
   });
 });

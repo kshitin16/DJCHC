@@ -11,10 +11,25 @@
  * NFR5.1: this is the reconciliation trigger — `schedule: 'every 1m'` in
  * `./resource.ts`. NFR5.2: the write is the same atomic conditional
  * `applySettlement` the webhook uses, so a webhook and a poller tick racing on
- * the same donation cannot double-apply. On this path the idempotency key is a
+ * the same donation cannot double-apply — and since revision 1 (review F-1)
+ * that write also refuses to rewrite a row that has already reached a terminal
+ * status, so a tick holding a row it listed as PENDING can no longer overwrite
+ * a SUCCEEDED webhook result. On this path the idempotency key is a
  * deterministic marker derived from the aggregator transaction id (the
  * status-query result carries no separate payment id in the thin adapter
  * interface).
+ *
+ * Orphan sweep (revision 1, review F-3): besides stale PENDING rows the tick
+ * also lists rows still INITIATED long past checkout — the state left behind
+ * when `markPending` fails after the aggregator checkout was created. Such a
+ * row carries no aggregator reference (`markPending` writes the status and the
+ * reference in one update), so there is nothing to ask the aggregator about:
+ * the poller SURFACES it (an ERROR log line per row plus an `orphaned` count in
+ * the tick summary, which the deferred NFR-OBS.4 alert topic will alarm on) and
+ * never guesses an outcome, because BR5.4 forbids resolving a donation without
+ * the aggregator's own record. A donor who did pay is still settled correctly
+ * without this sweep: the webhook looks the row up by `order_id`
+ * (= `Donation.id`) and `applySettlement` accepts an INITIATED row.
  *
  * Per-item errors are logged and skipped so one aggregator failure never stops
  * the rest of the batch; the tick returns a summary. Alerting on repeated
@@ -30,12 +45,20 @@ import { DonationRepository } from '../donation-shared/donation-repository';
 import { isDonationsEnabled, type DonationEnv } from '../donation-shared/flag';
 import { createLogger, describeError, type Logger } from '../donation-shared/logging';
 import { decideSettlement } from '../donation-shared/reconciliation';
+import type { DonationRecord } from '../donation-shared/types';
 
 export const DEFAULT_CONFIRMATION_WINDOW_MINUTES = 15;
 
+/**
+ * How long a row may stay INITIATED before the tick reports it as an orphan.
+ * Deliberately far longer than any aggregator webhook retry schedule, so a
+ * payment still in flight is never reported as stuck.
+ */
+export const DEFAULT_INITIATED_SWEEP_MINUTES = 1440;
+
 export type DonationReconcilerRepository = Pick<
   DonationRepository,
-  'queryPendingOlderThan' | 'applySettlement'
+  'queryPendingOlderThan' | 'queryInitiatedOlderThan' | 'applySettlement'
 >;
 
 export interface DonationReconcilerDeps {
@@ -54,13 +77,25 @@ export interface ReconciliationSummary {
   settled: number;
   duplicates: number;
   failed: number;
+  /** Rows still INITIATED past `DONATION_INITIATED_SWEEP_MINUTES` (F-3). */
+  initiatedCutoff?: string;
+  initiatedScanned: number;
+  /** Stale INITIATED rows with no aggregator reference — reported, never guessed. */
+  orphaned: number;
+}
+
+function windowMs(raw: string | undefined, defaultMinutes: number): number {
+  const minutes = Number(raw);
+  const effective = Number.isFinite(minutes) && minutes > 0 ? minutes : defaultMinutes;
+  return effective * 60_000;
 }
 
 export function confirmationWindowMs(env: DonationEnv): number {
-  const minutes = Number(env.DONATION_CONFIRMATION_WINDOW_MINUTES);
-  const effective =
-    Number.isFinite(minutes) && minutes > 0 ? minutes : DEFAULT_CONFIRMATION_WINDOW_MINUTES;
-  return effective * 60_000;
+  return windowMs(env.DONATION_CONFIRMATION_WINDOW_MINUTES, DEFAULT_CONFIRMATION_WINDOW_MINUTES);
+}
+
+export function initiatedSweepWindowMs(env: DonationEnv): number {
+  return windowMs(env.DONATION_INITIATED_SWEEP_MINUTES, DEFAULT_INITIATED_SWEEP_MINUTES);
 }
 
 /** Idempotency key for a settlement the poller (not a webhook) applied. */
@@ -72,6 +107,32 @@ export function createHandler(deps: DonationReconcilerDeps) {
   const logger = deps.logger ?? createLogger('donation-reconciler');
   const now = deps.now ?? (() => Date.now());
 
+  /** Ask the aggregator what happened and write its answer (BR5.4). */
+  async function reconcile(donation: DonationRecord, summary: ReconciliationSummary) {
+    const reference = donation.aggregatorTransactionId as string;
+    const record = await deps.adapter.getPaymentRecord(reference);
+    const status = decideSettlement(record);
+    const result = await deps.repository.applySettlement(
+      donation.id,
+      status,
+      reconciliationPaymentKey(reference),
+    );
+    if (result.applied) summary.settled += 1;
+    else summary.duplicates += 1;
+    logger.info(
+      result.applied
+        ? 'Reconciled from the aggregator record'
+        : 'Settlement rejected; row already settled or duplicate — no state change',
+      {
+        donationId: donation.id,
+        record,
+        status,
+        applied: result.applied,
+        ...(result.currentStatus ? { currentStatus: result.currentStatus } : {}),
+      },
+    );
+  }
+
   return async function handler(): Promise<ReconciliationSummary> {
     const summary: ReconciliationSummary = {
       enabled: isDonationsEnabled(deps.env),
@@ -79,6 +140,8 @@ export function createHandler(deps: DonationReconcilerDeps) {
       settled: 0,
       duplicates: 0,
       failed: 0,
+      initiatedScanned: 0,
+      orphaned: 0,
     };
     if (!summary.enabled) {
       logger.info('Donations disabled; reconciliation tick skipped');
@@ -109,25 +172,48 @@ export function createHandler(deps: DonationReconcilerDeps) {
         continue;
       }
       try {
-        const record = await deps.adapter.getPaymentRecord(donation.aggregatorTransactionId);
-        const status = decideSettlement(record);
-        const result = await deps.repository.applySettlement(
-          donation.id,
-          status,
-          reconciliationPaymentKey(donation.aggregatorTransactionId),
-        );
-        if (result.applied) summary.settled += 1;
-        else summary.duplicates += 1;
-        logger.info('Reconciled from the aggregator record', {
-          donationId: donation.id,
-          record,
-          status,
-          applied: result.applied,
-        });
+        await reconcile(donation, summary);
       } catch (error) {
         // Recoverable: the next tick retries this donation; the batch continues.
         summary.failed += 1;
         logger.error('Reconciliation failed for donation; will retry next tick', {
+          donationId: donation.id,
+          ...describeError(error),
+        });
+      }
+    }
+
+    // --- Orphan sweep (F-3) --------------------------------------------------
+    const initiatedCutoff = new Date(now() - initiatedSweepWindowMs(deps.env)).toISOString();
+    summary.initiatedCutoff = initiatedCutoff;
+    let stuck: DonationRecord[] = [];
+    try {
+      stuck = await deps.repository.queryInitiatedOlderThan(initiatedCutoff);
+    } catch (error) {
+      // Not fatal: the PENDING sweep above already did the load-bearing work.
+      logger.error('Could not list stale INITIATED donations', describeError(error));
+    }
+    summary.initiatedScanned = stuck.length;
+
+    for (const donation of stuck) {
+      if (!donation.aggregatorTransactionId) {
+        // `markPending` writes status and reference together, so a stale
+        // INITIATED row normally has no reference at all: report it, do not
+        // invent an outcome (BR5.4).
+        summary.orphaned += 1;
+        logger.error(
+          'Donation stuck INITIATED with no aggregator reference; needs manual reconciliation against the aggregator dashboard',
+          { donationId: donation.id, createdAt: donation.createdAt },
+        );
+        continue;
+      }
+      // Defensive: a reference on an INITIATED row means markPending stored it
+      // but the status write was lost. That IS answerable from the aggregator.
+      try {
+        await reconcile(donation, summary);
+      } catch (error) {
+        summary.failed += 1;
+        logger.error('Reconciliation of a stuck INITIATED donation failed; will retry next tick', {
           donationId: donation.id,
           ...describeError(error),
         });
@@ -155,7 +241,15 @@ function realDependencies(): DonationReconcilerDeps {
 
 export const handler = async (): Promise<ReconciliationSummary> => {
   if (!isDonationsEnabled(process.env)) {
-    return { enabled: false, scanned: 0, settled: 0, duplicates: 0, failed: 0 };
+    return {
+      enabled: false,
+      scanned: 0,
+      settled: 0,
+      duplicates: 0,
+      failed: 0,
+      initiatedScanned: 0,
+      orphaned: 0,
+    };
   }
   return createHandler(realDependencies())();
 };

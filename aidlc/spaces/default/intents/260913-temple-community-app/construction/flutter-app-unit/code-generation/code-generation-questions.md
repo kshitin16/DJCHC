@@ -11,8 +11,8 @@ No design questions remain open for this Unit. Three routine decisions the plan 
 
 Approve this exact Code Generation plan? Covers `code-generation-plan.md` (including its embedded Testing Contract) and `unit-test-instructions.md`.
 
-[Approval Fingerprint]: sha256:v3:77d07c85137bf7b3bce81dc12d6aa36a31b7783f2aca190501c3dce4094337ce
-[Planned Source]: aadb09b9e33b5ed4d0b0b139b52d53575a599fe6ebb0a3bab7e2c48a7f2543a1
+[Approval Fingerprint]: sha256:v3:6296d8e96383f65bfcef5291ef64ee63ef2ce0d2b94f2966979a4b432fc92d5b
+[Planned Source]: 6b0061ae14f5dbeffd70a1b362725a10973fc53b11759c5de34db310fa5fc4cf
 
 - Approve Plan — proceed to code generation
 - Request Changes — revise the plan

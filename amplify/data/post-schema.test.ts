@@ -104,7 +104,7 @@ describe('feed-unit: Post schema (Contract 3, entities.md)', () => {
     expect(sdl).toContain('type Post @model(queries:null,mutations:null,subscriptions:null)');
   });
 
-  it('exposes the six Contract 3 operations with the contract argument names and return shapes — listPosts Lambda-handled, the five admin operations JS resolvers on the Post table', () => {
+  it('exposes the six Contract 3 operations with the contract argument names and return shapes — the two list queries Lambda-handled, the four single-item admin operations JS resolvers on the Post table', () => {
     expect((types.listPosts as OperationLike).data.typeName).toBe('Query');
     expect((types.listAllPostsForAdmin as OperationLike).data.typeName).toBe('Query');
     expect((types.getPost as OperationLike).data.typeName).toBe('Query');
@@ -137,30 +137,35 @@ describe('feed-unit: Post schema (Contract 3, entities.md)', () => {
     );
     expect(operationLine('deletePost')).toMatch(/^\s*deletePost\(id: ID!\): Post! /);
 
+    // Revision 1 (finding F-1): `listAllPostsForAdmin` moved off the JS
+    // resolvers onto the `feed-api` Lambda so it can page the table; only the
+    // four single-item operations remain JS resolvers on the Post table.
     const resolverFields = (jsResolvers ?? []).map((r) => `${r.typeName}.${r.fieldName}`).sort();
     expect(resolverFields).toEqual(
-      [
-        'Query.listAllPostsForAdmin',
-        'Query.getPost',
-        'Mutation.createPost',
-        'Mutation.updatePost',
-        'Mutation.deletePost',
-      ].sort(),
+      ['Query.getPost', 'Mutation.createPost', 'Mutation.updatePost', 'Mutation.deletePost'].sort(),
     );
+    expect(resolverFields).not.toContain('Query.listAllPostsForAdmin');
+
     expect(operationLine('listPosts')).toContain('@function(name: "FnListPosts")');
-    const listPostsHandlers = (types.listPosts as { data: { handlers: unknown[] | null } }).data
-      .handlers;
-    expect(listPostsHandlers).toHaveLength(1);
-    // The handler's data lives behind a private symbol; it must be the feedApi
-    // function factory (not a resolver entry file).
-    const handlerObject = listPostsHandlers?.[0] as unknown as Record<symbol, unknown>;
-    const handlerData = Object.getOwnPropertySymbols(handlerObject)
-      .map((sym) => handlerObject[sym])
-      .find(
-        (value): value is { handler: unknown } =>
-          typeof value === 'object' && value !== null && 'handler' in value,
-      );
-    expect(handlerData?.handler).toBe(feedApi);
+    expect(operationLine('listAllPostsForAdmin')).toContain(
+      '@function(name: "FnListAllPostsForAdmin")',
+    );
+    // Both list queries must be handled by the SAME feedApi function: that
+    // shared handler is what keeps one paginated Scan implementation for both.
+    for (const field of ['listPosts', 'listAllPostsForAdmin'] as const) {
+      const handlers = (types[field] as { data: { handlers: unknown[] | null } }).data.handlers;
+      expect(handlers).toHaveLength(1);
+      // The handler's data lives behind a private symbol; it must be the
+      // feedApi function factory (not a resolver entry file).
+      const handlerObject = handlers?.[0] as unknown as Record<symbol, unknown>;
+      const handlerData = Object.getOwnPropertySymbols(handlerObject)
+        .map((sym) => handlerObject[sym])
+        .find(
+          (value): value is { handler: unknown } =>
+            typeof value === 'object' && value !== null && 'handler' in value,
+        );
+      expect(handlerData?.handler).toBe(feedApi);
+    }
   });
 
   it('lets a guest (identity-pool unauthenticated role) and any signed-in user call listPosts, and ONLY the Admin group call the five admin operations (BR2.3, BR2.7, NFR-AUTHZ.1)', () => {
@@ -169,12 +174,31 @@ describe('feed-unit: Post schema (Contract 3, entities.md)', () => {
     expect(publicRead).toContain('{allow: private}');
     expect(publicRead).not.toMatch(/groups|apiKey|aws_api_key/);
 
+    // All five admin operations restrict to the Admin group, but the SDL
+    // renders the rule at a different stage depending on the handler: a JS
+    // resolver field is already expanded to the cognito-groups directive,
+    // while a `@function`-handled field still carries the `@auth` rule the
+    // Amplify transformer expands at deploy time (`listPosts` shows the same
+    // form above). Both are the declarative, server-side enforcing layer.
     for (const op of ADMIN_OPERATIONS) {
       const line = operationLine(op);
-      expect(line).toContain('@aws_cognito_user_pools(cognito_groups: ["Admin"])');
+      const restrictedToAdmin =
+        line.includes('@aws_cognito_user_pools(cognito_groups: ["Admin"])') ||
+        line.includes('@auth(rules: [{allow: groups, groups: ["Admin"]}])');
+      expect({ op, restrictedToAdmin }).toEqual({ op, restrictedToAdmin: true });
+      // Nothing else may reach them: no guest, no plain authenticated caller,
+      // no API key, no IAM principal.
       expect(line).not.toContain('@aws_api_key');
       expect(line).not.toContain('@aws_iam');
+      expect(line).not.toContain('apiKey');
+      expect(line).not.toContain('identityPool');
+      expect(line).not.toContain('{allow: public');
+      expect(line).not.toContain('{allow: private');
     }
+    // The two Lambda-backed queries must NOT share an authorization rule just
+    // because they share a handler.
+    expect(operationLine('listAllPostsForAdmin')).not.toContain('{allow: public');
+    expect(operationLine('listPosts')).not.toContain('groups');
 
     // Type-level rules on Post mirror the operations: public/authenticated
     // READ only, full access for Admin — never a write for anyone else.

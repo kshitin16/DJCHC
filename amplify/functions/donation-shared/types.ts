@@ -47,7 +47,13 @@ export interface DonationRecord {
   createdAt: string;
   updatedAt: string;
   cancelledAt?: string;
-  /** Internal, persistence-layer only — never returned by Contract 5. */
+  /**
+   * Internal idempotency marker. Never returned by Contract 5's custom
+   * operations (`toPublicDonation` strips it); the owning donor can still read
+   * it through the generated `getDonation`/`listDonations` queries, which is
+   * accepted because it is an aggregator reference, not a payment credential
+   * (revision 1, review F-7 — see `amplify/data/resource.ts` § Fields).
+   */
   processedPaymentId?: string;
 }
 

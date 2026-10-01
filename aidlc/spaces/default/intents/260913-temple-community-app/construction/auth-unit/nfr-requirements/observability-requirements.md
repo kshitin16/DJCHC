@@ -18,6 +18,17 @@
 
 No sign-in attempt logs the ID token itself, the `sub`/`email` claims beyond what's needed to attribute the log line, or any Google-side credential — per the observability anti-pattern of logging sensitive data, and per NFR4's encryption/handling requirement extending to logs.
 
+> **Amended 2026-10-01 at Observability Setup.** CloudWatch Logs sets retention
+> per log GROUP, not per log level, so the per-level split above cannot be
+> configured as written. Resolved at that stage (Q2): **30 days on every log
+> group except `donation-webhook` and `donation-reconciler`, which are 90 days.**
+> ERROR lines outside the two donation functions are therefore retained 30 days
+> rather than 90 — a deliberate narrowing chosen with the trade-off visible, and
+> one that reduces how long personal data in log context survives
+> (`environment-provisioning/validation-report.md` check C-5). The per-level
+> table above remains the record of what was originally asked for. See
+> `operation/observability-setup/log-queries.md`.
+
 ## NFR-OBS.3 — Tracing
 
 Not applicable at this app's scale and topology — AuthUnit's sign-in flow is a single client-to-Cognito-to-Google round trip with no internal service-to-service hop that would benefit from distributed tracing. Amplify's client-side Auth hub events are sufficient to diagnose a failed sign-in.

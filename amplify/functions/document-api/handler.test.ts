@@ -208,6 +208,30 @@ describe('pdf-library-unit: document-api Lambda', () => {
   });
 
   // --- confirmDocumentUpload (BR6.2) -----------------------------------------
+  // This authorization test is NOT a backstop check, despite the "backstop"
+  // framing on its siblings above. `confirmDocumentUpload` is Lambda-backed, so
+  // its declared `allow.group('Admin')` is NOT translated into an
+  // `@aws_cognito_user_pools(cognito_groups:["Admin"])` directive by Amplify
+  // Data — verified against the deployed SDL on 2026-10-01. AppSync therefore
+  // admits any authenticated Cognito user and `requireAdmin` is the ONLY thing
+  // that refuses a non-admin. This test is what keeps that from being deleted
+  // by someone who reads the (now corrected) comments and believes AppSync has
+  // already filtered the caller.
+  it('confirmDocumentUpload refuses a non-admin and a guest before touching S3 or the table (BR6.3 — sole enforcing layer)', async () => {
+    const { run, calls, s3 } = harness();
+    s3.objects.set(KEY, { exists: true, contentType: 'application/pdf' });
+    const args = { title: 'Stotra', category: 'BHAKTAMAR', s3Key: KEY };
+    await expect(run(event('confirmDocumentUpload', args, userCtx()))).rejects.toThrow(
+      DocumentAuthorizationError,
+    );
+    await expect(run(event('confirmDocumentUpload', args, guestCtx()))).rejects.toThrow(
+      DocumentAuthorizationError,
+    );
+    // Refused before any side effect: no record written for an object that
+    // does exist in S3, so the refusal is authorization and not a lookup miss.
+    expect(calls).toEqual([]);
+  });
+
   it('confirmDocumentUpload creates the record from the key, with uploadedByGoogleId from identity.sub', async () => {
     const { run, calls, s3 } = harness();
     s3.objects.set(KEY, { exists: true, contentType: 'application/pdf' });

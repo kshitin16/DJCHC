@@ -13,6 +13,9 @@
       "path": "jest.config.ts"
     },
     {
+      "path": ".github/workflows/ci.yml"
+    },
+    {
       "path": "README.md"
     },
     {

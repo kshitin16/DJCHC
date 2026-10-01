@@ -2,37 +2,139 @@
   "stage": "code-generation",
   "unit": "donation-unit",
   "upstream_ids": [
-    "BR5.1", "BR5.2", "BR5.3", "BR5.4", "BR5.5", "BR5.6",
-    "NFR-PERF.1", "NFR-PERF.2",
-    "NFR2.1", "NFR2.2", "NFR2.3", "NFR2.4",
-    "NFR3.1", "NFR3.5",
+    "BR5.1",
+    "BR5.2",
+    "BR5.3",
+    "BR5.4",
+    "BR5.5",
+    "BR5.6",
+    "NFR-PERF.1",
+    "NFR-PERF.2",
+    "NFR2.1",
+    "NFR2.2",
+    "NFR2.3",
+    "NFR2.4",
+    "NFR3.1",
+    "NFR3.5",
     "NFR4.1",
-    "NFR5.1", "NFR5.2",
+    "NFR5.1",
+    "NFR5.2",
     "NFR-SC.1",
-    "NFR-OBS.1", "NFR-OBS.2", "NFR-OBS.3", "NFR-OBS.4"
+    "NFR-OBS.1",
+    "NFR-OBS.2",
+    "NFR-OBS.3",
+    "NFR-OBS.4"
   ],
   "coverage": [
-    { "id": "BR5.1", "status": "OK", "target": "amplify/functions/donation-shared/aggregator-adapter.ts" },
-    { "id": "BR5.2", "status": "OK", "target": "amplify/functions/donation-shared/validation.ts" },
-    { "id": "BR5.3", "status": "OK", "target": "amplify/functions/donation-shared/validation.ts" },
-    { "id": "BR5.4", "status": "OK", "target": "amplify/functions/donation-reconciler/handler.ts" },
-    { "id": "BR5.5", "status": "OK", "target": "amplify/functions/donation-shared/donation-repository.ts" },
-    { "id": "BR5.6", "status": "OK", "target": "amplify/functions/donation-api/handler.ts" },
-    { "id": "NFR-PERF.1", "status": "OK", "target": "amplify/functions/donation-api/handler.ts" },
-    { "id": "NFR-PERF.2", "status": "OK", "target": "amplify/functions/donation-webhook/handler.ts" },
-    { "id": "NFR2.1", "status": "N/A", "target": "Best-effort availability inherited from managed services; no code" },
-    { "id": "NFR2.2", "status": "OK", "target": "amplify/functions/donation-reconciler/handler.ts" },
-    { "id": "NFR2.3", "status": "OK", "target": "amplify/backend.ts" },
-    { "id": "NFR2.4", "status": "N/A", "target": "No failover designed (single aggregator accepted); no code" },
-    { "id": "NFR3.1", "status": "OK", "target": "amplify/functions/donation-webhook/handler.ts" },
-    { "id": "NFR3.5", "status": "OK", "target": "README.md" },
-    { "id": "NFR4.1", "status": "OK", "target": "amplify/backend.ts" },
-    { "id": "NFR5.1", "status": "OK", "target": "amplify/functions/donation-reconciler/resource.ts" },
-    { "id": "NFR5.2", "status": "OK", "target": "amplify/functions/donation-shared/donation-repository.ts" },
-    { "id": "NFR-SC.1", "status": "OK", "target": "amplify/data/resource.ts" },
-    { "id": "NFR-OBS.1", "status": "Deferred", "target": "Custom EMF business metrics deferred to the full build (thin, flagged-off pass); standard Lambda/AppSync CloudWatch metrics exist by default" },
-    { "id": "NFR-OBS.2", "status": "OK", "target": "amplify/functions/donation-shared/logging.ts" },
-    { "id": "NFR-OBS.3", "status": "N/A", "target": "Tracing not applicable per observability-design.md" },
-    { "id": "NFR-OBS.4", "status": "Deferred", "target": "SNS donation-reconciliation-alerts topic and email subscription deferred to the full build — an Environment Provisioning action per infrastructure-specification.md" }
+    {
+      "id": "BR5.1",
+      "status": "OK",
+      "target": "amplify/functions/donation-shared/aggregator-adapter.ts"
+    },
+    {
+      "id": "BR5.2",
+      "status": "OK",
+      "target": "amplify/functions/donation-shared/validation.ts"
+    },
+    {
+      "id": "BR5.3",
+      "status": "OK",
+      "target": "amplify/functions/donation-shared/validation.ts"
+    },
+    {
+      "id": "BR5.4",
+      "status": "OK",
+      "target": "amplify/functions/donation-reconciler/handler.ts \u2014 the aggregator's own record (getPaymentRecord \u2192 decideSettlement) decides SUCCEEDED/FAILED, never the timeout; revision 1 adds the stale-INITIATED orphan sweep, which REPORTS a row it cannot ask the aggregator about (no reference) rather than resolving it"
+    },
+    {
+      "id": "BR5.5",
+      "status": "OK",
+      "target": "amplify/functions/donation-shared/donation-repository.ts (applySettlement: one atomic conditional UpdateItem, idempotent on payment_id AND guarded on non-terminal status since revision 1) + amplify/functions/donation-webhook/handler.ts (a rejected write is a logged no-op answered 200)"
+    },
+    {
+      "id": "BR5.6",
+      "status": "OK",
+      "target": "amplify/functions/donation-api/handler.ts"
+    },
+    {
+      "id": "NFR-PERF.1",
+      "status": "OK",
+      "target": "amplify/functions/donation-api/handler.ts"
+    },
+    {
+      "id": "NFR-PERF.2",
+      "status": "OK",
+      "target": "amplify/functions/donation-webhook/handler.ts"
+    },
+    {
+      "id": "NFR2.1",
+      "status": "N/A",
+      "target": "Best-effort availability inherited from managed services; no code"
+    },
+    {
+      "id": "NFR2.2",
+      "status": "OK",
+      "target": "amplify/functions/donation-reconciler/handler.ts \u2014 per-item error isolation, the aggregator-record recovery path, and (revision 1) the stale-INITIATED orphan sweep plus exhaustive LastEvaluatedKey pagination so no stale row is silently skipped"
+    },
+    {
+      "id": "NFR2.3",
+      "status": "OK",
+      "target": "amplify/backend.ts"
+    },
+    {
+      "id": "NFR2.4",
+      "status": "N/A",
+      "target": "No failover designed (single aggregator accepted); no code"
+    },
+    {
+      "id": "NFR3.1",
+      "status": "OK",
+      "target": "amplify/functions/donation-webhook/handler.ts"
+    },
+    {
+      "id": "NFR3.5",
+      "status": "OK",
+      "target": "README.md"
+    },
+    {
+      "id": "NFR4.1",
+      "status": "OK",
+      "target": "amplify/backend.ts"
+    },
+    {
+      "id": "NFR5.1",
+      "status": "OK",
+      "target": "amplify/functions/donation-reconciler/resource.ts"
+    },
+    {
+      "id": "NFR5.2",
+      "status": "OK",
+      "target": "amplify/functions/donation-shared/donation-repository.ts \u2014 a single conditional UpdateItem, never read-then-write; since revision 1 the condition also refuses to rewrite a terminal row, so a webhook and a reconciler tick racing on the same donation cannot double-apply even with different idempotency keys"
+    },
+    {
+      "id": "NFR-SC.1",
+      "status": "OK",
+      "target": "amplify/data/resource.ts (statusIndex and donorIndex keep both sweeps and myDonations Queries rather than Scans) + amplify/functions/donation-shared/donation-repository.ts (revision 1: every Query paginates through LastEvaluatedKey, so growth past a 1 MB page does not silently truncate a result)"
+    },
+    {
+      "id": "NFR-OBS.1",
+      "status": "Deferred",
+      "target": "Custom EMF business metrics deferred to the full build (thin, flagged-off pass); standard Lambda/AppSync CloudWatch metrics exist by default"
+    },
+    {
+      "id": "NFR-OBS.2",
+      "status": "OK",
+      "target": "amplify/functions/donation-shared/logging.ts \u2014 structured JSON, no personal data; revision 1 adds explicit no-op log lines for a rejected settlement (with the blocking status) and for an orphaned INITIATED row"
+    },
+    {
+      "id": "NFR-OBS.3",
+      "status": "N/A",
+      "target": "Tracing not applicable per observability-design.md"
+    },
+    {
+      "id": "NFR-OBS.4",
+      "status": "Deferred",
+      "target": "SNS donation-reconciliation-alerts topic and email subscription deferred to the full build \u2014 an Environment Provisioning action per infrastructure-specification.md. Revision 1 gives it concrete alarm targets: the reconciliation tick summary's `failed` and `orphaned` counts"
+    }
   ]
 }

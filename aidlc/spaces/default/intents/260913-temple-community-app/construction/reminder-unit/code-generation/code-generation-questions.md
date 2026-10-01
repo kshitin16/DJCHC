@@ -11,8 +11,8 @@ No design questions remain open for this Unit. The R-04 fix (the `ownerIndex` GS
 
 Approve this exact Code Generation plan? Covers `code-generation-plan.md` (including its embedded Testing Contract) and `unit-test-instructions.md`.
 
-[Approval Fingerprint]: sha256:v3:a7c9657f190176cb83522c3d878127c09f0a27e4bee5f0942d54a9e168f89ca7
-[Planned Source]: a377d97b70a0f90f486331021beef0cbbd8dbbe7d01234f84b6c169311d5b1d6
+[Approval Fingerprint]: sha256:v3:c58e0c598f2e43e1c02fc7d506b3bd6b04c7d027df810ffd66034524e6f631cc
+[Planned Source]: 6b0061ae14f5dbeffd70a1b362725a10973fc53b11759c5de34db310fa5fc4cf
 
 - Approve Plan — proceed to code generation
 - Request Changes — revise the plan

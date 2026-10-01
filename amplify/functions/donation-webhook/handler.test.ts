@@ -5,6 +5,7 @@
 import { createHmac } from 'node:crypto';
 import type { LambdaFunctionURLEvent } from 'aws-lambda';
 import { createHandler, type DonationWebhookDeps } from './handler';
+import { SETTLEABLE_STATUSES } from '../donation-shared/donation-repository';
 import { PlaceholderAggregatorAdapter } from '../donation-shared/aggregator-adapter';
 import { silentLogger } from '../donation-shared/logging';
 import type { DonationRecord } from '../donation-shared/types';
@@ -181,5 +182,50 @@ describe('donation-unit: donation-webhook handler', () => {
       throw new Error('DynamoDB unavailable');
     };
     expect((await handlerWith(failing).handler(anEvent(aWebhookBody()))).statusCode).toBe(500);
+  });
+
+  it('answers 200 without changing state when the donation is already terminal, so the aggregator stops retrying (F-1)', async () => {
+    // A late `payment.failed` for an earlier attempt, carrying a DIFFERENT
+    // payment id from the one that already succeeded. The repository's atomic
+    // guard refuses the write; the handler must report that as a clean no-op.
+    const settled = aDonation({ status: 'SUCCEEDED', processedPaymentId: 'pay_winner' });
+    const rows = new Map([[settled.id, { ...settled }]]);
+    const calls: Array<{ op: string; args: unknown[] }> = [];
+    const repository: DonationWebhookDeps['repository'] = {
+      async getById(id) {
+        calls.push({ op: 'getById', args: [id] });
+        return rows.get(id);
+      },
+      // Mirrors the real conditional write via its exported settleable set, so
+      // the rule itself is not restated here.
+      async applySettlement(id, status, paymentId) {
+        calls.push({ op: 'applySettlement', args: [id, status, paymentId] });
+        const row = rows.get(id)!;
+        if (!(SETTLEABLE_STATUSES as readonly string[]).includes(row.status)) {
+          return { applied: false, currentStatus: row.status };
+        }
+        Object.assign(row, { status, processedPaymentId: paymentId });
+        return { applied: true, donation: row };
+      },
+    };
+
+    const handler = createHandler({
+      repository,
+      adapter: new PlaceholderAggregatorAdapter(),
+      env: { DONATIONS_ENABLED: 'true', DONATION_AGGREGATOR_WEBHOOK_SECRET: SECRET },
+      logger: silentLogger,
+    });
+
+    const body = aWebhookBody({
+      event: 'payment.failed',
+      payload: { order_id: 'don-1', payment_id: 'pay_late' },
+    });
+    const response = await handler(anEvent(body));
+
+    expect(response.statusCode).toBe(200);
+    expect(parse(response)).toMatchObject({ applied: false, currentStatus: 'SUCCEEDED' });
+    expect(rows.get('don-1')?.status).toBe('SUCCEEDED');
+    expect(rows.get('don-1')?.processedPaymentId).toBe('pay_winner');
+    expect(calls.map((c) => c.op)).toEqual(['getById', 'applySettlement']);
   });
 });

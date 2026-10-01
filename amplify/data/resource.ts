@@ -50,12 +50,24 @@
  *
  * Exactly `entities.md` plus one internal attribute: `processedPaymentId`
  * (security-design.md, Idempotent write design / NFR5.2). It is the
- * persistence-layer idempotency marker written by the settlement
- * `UpdateItem` and is never returned by Contract 5's custom operations
- * (`donation-api/handler.ts` strips it) — it exists in the model only so the
- * table has the attribute. `createdAt` is declared explicitly (rather than
- * relying on Amplify's auto-timestamp) so it can be a secondary-index sort
- * key; the repository sets it on every create.
+ * persistence-layer idempotency marker written by the settlement `UpdateItem`.
+ *
+ * Exposure, stated precisely (revision 1, review F-7 — the earlier blanket
+ * "never exposed" claim was wrong): Contract 5's three custom operations never
+ * return it (`toPublicDonation` strips it), but declaring it on the model also
+ * puts it in the generated `getDonation` / `listDonations` selection set, where
+ * the owner-read rule below lets a donor read it on THEIR OWN rows. That is
+ * accepted rather than removed: the value is an aggregator-issued settlement
+ * reference, not a payment credential — BR5.1 (never hold a card number or UPI
+ * PIN) is not implicated — and the exposure is owner-scoped, to the same person
+ * who made the payment. Keeping the field declared is also what makes the
+ * attribute part of the model's schema at all. If a future release wants it
+ * hidden, the change is to drop it from `a.model({...})` and let the Lambdas
+ * write the attribute directly to DynamoDB.
+ *
+ * `createdAt` is declared explicitly (rather than relying on Amplify's
+ * auto-timestamp) so it can be a secondary-index sort key; the repository sets
+ * it on every create.
  *
  * ## Secondary indexes
  *
@@ -146,7 +158,9 @@ const schemaDefinitions = {
       aggregatorTransactionId: a.string(),
       createdAt: a.datetime().required(),
       cancelledAt: a.datetime(),
-      // Internal idempotency marker (security-design.md); never exposed by Contract 5.
+      // Internal idempotency marker (security-design.md). Not returned by
+      // Contract 5's custom operations; readable by the owning donor through
+      // the generated model queries — see "Fields" above (review F-7).
       processedPaymentId: a.string(),
     })
     .secondaryIndexes((index) => [
@@ -204,26 +218,74 @@ const schemaDefinitions = {
   //   `allow.guest()` + `allow.authenticated()` (anyone may read the feed —
   //   FR1.3/FR2.6, NFR-AUTHZ.1 — guests through the Identity Pool's
   //   unauthenticated role, the same mode Contract 9 uses); the five admin
-  //   operations carry `allow.group('Admin')` ONLY, so AppSync rejects any
-  //   caller whose `cognito:groups` claim (Contract 2) lacks "Admin" before
-  //   the resolver runs. The `Post` model carries matching type-level rules
-  //   so the fields of a returned `Post` are readable under the same modes.
-  // - **In-resolver group check (`post-resolvers/*.js`):** each admin
-  //   resolver re-checks `ctx.identity.groups` and calls `util.unauthorized()`
-  //   otherwise. This is a defense-in-depth BACKSTOP, not the enforcing layer.
+  //   operations carry `allow.group('Admin')` ONLY. The `Post` model carries
+  //   matching type-level rules so the fields of a returned `Post` are
+  //   readable under the same modes.
+  //
+  //   **CORRECTED 2026-10-01, against the first real deployment.** That rule
+  //   does NOT reach AppSync for every admin operation, and the difference is
+  //   whether the operation is backed by a custom JS resolver or by a Lambda.
+  //   Reading the deployed SDL (`aws appsync get-introspection-schema
+  //   --include-directives`) shows:
+  //
+  //     createPost            @aws_cognito_user_pools(cognito_groups:["Admin"])
+  //     deletePost            @aws_cognito_user_pools(cognito_groups:["Admin"])
+  //     updatePost            @aws_cognito_user_pools(cognito_groups:["Admin"])
+  //     listAllPostsForAdmin  @aws_cognito_user_pools        <-- no group
+  //     allSuggestions        @aws_cognito_user_pools        <-- no group
+  //     confirmDocumentUpload @aws_cognito_user_pools        <-- no group
+  //
+  //   All six declare `allow.group('Admin')` here. Amplify Data translates it
+  //   into a `cognito_groups` directive for `a.handler.custom(...)` resolvers
+  //   but NOT for `a.handler.function(...)` Lambda-backed operations, where it
+  //   degrades silently to "any authenticated Cognito user". There is no
+  //   warning at synth or deploy time.
+  //
+  //   So for the three Lambda-backed operations, AppSync admits any signed-in
+  //   worshipper and the request reaches the Lambda.
+  // - **In-handler group check:** each admin operation re-checks the caller's
+  //   groups — `ctx.identity.groups` + `util.unauthorized()` in the four
+  //   `post-resolvers/*.js` resolvers, `event.identity.groups` in the
+  //   `feed-api`, `all-suggestions` and `document-api` Lambdas' `requireAdmin`.
+  //
+  //   **For the three Lambda-backed operations this is THE ENFORCING LAYER,
+  //   not a backstop.** It is the only thing standing between an ordinary
+  //   signed-in user and every suggestion-box submission. Do not remove or
+  //   weaken `requireAdmin` on the belief that AppSync has already filtered
+  //   the caller — for those three it has not. `all-suggestions`,
+  //   `document-api` and `feed-api` each carry a test asserting a non-admin
+  //   identity is refused; those tests exist to make this impossible to
+  //   delete by accident.
+  //
+  //   For the JS-resolver operations it remains a genuine second layer, and
+  //   it is load-bearing there too, because Amplify's IAM authorization mode
+  //   does not apply `@auth` rules to an IAM principal and an IAM caller
+  //   carries no `cognito:groups`.
   // - **Flutter screens (flutter-app-unit):** UX convenience only (hiding the
   //   admin controls) — never relied on for security.
   //
-  // ## Why `listPosts` is Lambda-backed while the admin operations are not
+  // ## Why the two list operations are Lambda-backed and the other four are not
   //
-  // The installed `@aws-amplify/data-schema` refuses identityPool-based rules
-  // (`allow.guest()`) on any `a.handler.custom` operation ("not currently
-  // supported with handler.custom"). Rather than an expiring API key, the
-  // builder chose (plan Revision 2) a small Lambda, `functions/feed-api`,
-  // for this ONE operation, which `a.handler.function` accepts with the
-  // guest rule the design intended. The five admin operations stay AppSync
-  // JavaScript resolvers with no Lambda. When Amplify lifts the restriction,
-  // `listPosts` can move back to `post-resolvers/` unchanged in behaviour.
+  // 1. `listPosts`: the installed `@aws-amplify/data-schema` refuses
+  //    identityPool-based rules (`allow.guest()`) on any `a.handler.custom`
+  //    operation ("not currently supported with handler.custom"). Rather than
+  //    an expiring API key, the builder chose (plan Revision 2) a small
+  //    Lambda, `functions/feed-api`, which `a.handler.function` accepts with
+  //    the guest rule the design intended.
+  // 2. `listAllPostsForAdmin`: it must PAGE through the table, and an
+  //    APPSYNC_JS unit resolver makes exactly one data-source call per
+  //    invocation. As a JS resolver it read only the first Scan page and
+  //    silently dropped older posts past ~100 rows (Revision 1, review
+  //    finding F-1). Contract 3 declares `listAllPostsForAdmin: [Post!]!`
+  //    with no arguments and no pagination field, so pagination cannot be
+  //    exposed through the operation without breaking the contract; moving it
+  //    onto the same Lambda keeps the contract shape exact AND returns every
+  //    row. Both list paths now share one paginated Scan implementation, so a
+  //    pagination bug cannot reappear in one while the other stays correct.
+  //
+  // `getPost`, `createPost`, `updatePost` and `deletePost` are single-item
+  // reads and writes with no pagination concern, so they stay AppSync
+  // JavaScript resolvers with no Lambda.
   //
   // ## Generated model operations are disabled
   //
@@ -300,17 +362,17 @@ const schemaDefinitions = {
     .handler(a.handler.function(feedApi)),
 
   // --- Contract 3: admin-only (BR2.3, BR2.7) — `allow.group('Admin')` is the
-  // enforcing layer; the resolvers' own group check is a backstop. -----------
+  // enforcing layer; the handlers' own group check is a backstop. ------------
+  //
+  // `listAllPostsForAdmin` is Lambda-backed for the SAME reason `listPosts` is
+  // (see "Why the two list operations are Lambda-backed" above): it must page
+  // through the table, which an APPSYNC_JS resolver cannot do. Contract 3's
+  // return type stays exactly `[Post!]!` with no arguments.
   listAllPostsForAdmin: a
     .query()
     .returns(a.ref('Post').required().array().required())
     .authorization((allow) => [allow.group('Admin')])
-    .handler(
-      a.handler.custom({
-        dataSource: a.ref('Post'),
-        entry: './post-resolvers/listAllPostsForAdmin.js',
-      }),
-    ),
+    .handler(a.handler.function(feedApi)),
 
   getPost: a
     .query()
