@@ -54,10 +54,22 @@ surface already.
 > real pass/fail assertion expected later. This is that assertion, and it was
 > made against deployed code rather than a mock.
 >
-> Still not covered: the same check on `listAllPostsForAdmin` and
-> `confirmDocumentUpload`, the other two operations in the same position.
-> `confirmDocumentUpload` now has a unit test for it; neither has been
-> exercised against a deployed environment.
+> **All three now covered, same session.** The other two operations in the same
+> position were tested identically against their deployed Lambdas:
+>
+> | Operation | Admin identity | Non-admin identity |
+> |---|---|---|
+> | `allSuggestions` | `200`, `[]` | `SuggestionAuthorizationError` |
+> | `listAllPostsForAdmin` | `200`, `[]` | `Unauthorized: listAllPostsForAdmin requires membership of the Admin group` |
+> | `confirmDocumentUpload` | `DocumentValidationError` — "s3Key was not issued by createDocumentUploadUrl" | `DocumentAuthorizationError` — "Only an admin can upload or delete documents" |
+>
+> `confirmDocumentUpload` is the strongest of the three. The admin reached
+> business-logic validation and failed there on a deliberately fabricated S3
+> key, while the non-admin was refused at authorization with the identical
+> payload. Two different failures from the same input prove the gate
+> discriminates on identity alone. For the other two an empty list is good
+> evidence but is also what a silently broken query would return; this one
+> cannot be read that way.
 
 **S-7 is the one to run first among these.** The admin allowlist is the project's
 only privilege boundary, and `team.md` records a deliberate choice to hold the
