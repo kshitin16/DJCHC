@@ -996,3 +996,44 @@ key.
   Pipeline stage. If Amplify Hosting's own pipeline is used for deploys, a test
   step must be added to `amplify.yml` deliberately; it runs no app tests by
   default.
+
+## Dependency advisory triage
+
+> **Triaged 2026-10-02** under `team.md` Q8, which accepts "Dependabot alerts
+> clear, **or explicitly triaged**". Recorded here so each merge does not
+> re-litigate the same 21 findings.
+
+`npm audit` reports 21 vulnerabilities (18 high, 3 moderate). **All of them are
+in `devDependencies` — the Amplify build and deploy toolchain. None is in a
+runtime dependency.**
+
+Runtime `dependencies` are the AWS SDK clients plus `google-auth-library`;
+none is flagged. Nothing vulnerable executes in a Lambda or ships inside the
+iOS or Android app.
+
+Root advisories, all reached transitively through `@aws-amplify/backend` and
+`@aws-amplify/backend-cli`:
+
+| Package | Severity | Issue |
+|---|---|---|
+| `immutable` | high | Prototype pollution; `List` trie overflow DoS; hash-collision DoS |
+| `brace-expansion` | high | DoS via uncontrolled recursion |
+| `lodash` | high | Code injection via `_.template` |
+| `csv-parse` | moderate | Prototype replacement via the columns path |
+| `mysql2` | — | Decompression-bomb DoS (unused — this project has no MySQL) |
+
+**Why accepted rather than fixed:** the only remedy `npm audit fix --force`
+offers is downgrading `@aws-amplify/backend-cli` from 1.x to **0.11.1**, a
+breaking change to the entire deploy toolchain — the same toolchain that
+provisions the backend. Trading a working deploy path for advisories that
+cannot reach production is a poor exchange.
+
+**Exploitability here:** these are reachable only by feeding malicious input to
+the local `ampx`/CDK CLI during a build. That presupposes an attacker already
+executing code on the builder's machine or in CI, at which point the signing
+keys and AWS credentials are the real exposure, not `lodash`.
+
+**Revisit when:** Amplify bumps its transitive dependencies (watch the
+`@aws-amplify/backend` changelog), or if any flagged package ever appears in
+runtime `dependencies`. Re-run `npm audit --audit-level=high` at that point
+rather than assuming this triage still holds.
