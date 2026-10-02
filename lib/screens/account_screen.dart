@@ -33,6 +33,7 @@ class AccountScreen extends StatefulWidget {
   final VoidCallback? onSignedOut;
 
   static const Key emailKey = ValueKey('account.email');
+  static const Key nameKey = ValueKey('account.name');
   static const Key signOutKey = ValueKey('account.signOut');
   static const Key signOutErrorKey = ValueKey('account.signOutError');
   static const Key remindersErrorKey = ValueKey('account.remindersError');
@@ -93,13 +94,34 @@ class _AccountScreenState extends State<AccountScreen> {
       appBar: AppBar(title: Text(strings.t('account.title'))),
       body: ListView(
         children: [
-          ListTile(
-            leading: const Icon(Icons.person_outline),
-            title: Text(strings.t('account.signedInAs')),
-            subtitle: Text(
-              widget.authState.email ?? '—',
-              key: AccountScreen.emailKey,
-            ),
+          Builder(
+            builder: (context) {
+              // Google does not guarantee a name, so the tile renders the
+              // email alone when none arrived rather than showing a gap or a
+              // placeholder. Both are personal data: displayed, never logged.
+              final name = widget.authState.displayName;
+              return ListTile(
+                leading: const Icon(Icons.person_outline),
+                title: Text(strings.t('account.signedInAs')),
+                isThreeLine: name != null,
+                subtitle: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (name != null)
+                      Text(
+                        name,
+                        key: AccountScreen.nameKey,
+                        style: Theme.of(context).textTheme.bodyLarge,
+                      ),
+                    Text(
+                      widget.authState.email ?? '—',
+                      key: AccountScreen.emailKey,
+                    ),
+                  ],
+                ),
+              );
+            },
           ),
           const Divider(height: 1),
           Padding(

@@ -174,6 +174,10 @@ class AmplifyGateway implements ApiGateway, AuthGateway {
         isSignedIn: true,
         sub: claims['sub'] as String?,
         email: claims['email'] as String?,
+        // Mapped from Google by auth-unit's `attributeMapping`. Either may be
+        // absent — Google does not guarantee a surname — so both stay nullable.
+        givenName: claims['given_name'] as String?,
+        familyName: claims['family_name'] as String?,
         groups: _groupsFrom(claims['cognito:groups']),
         identityId: identityId,
       );

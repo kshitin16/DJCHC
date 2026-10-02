@@ -34,7 +34,7 @@ amplify/
     donation-api/       # donation-unit: AppSync resolver Lambda (Contract 5)
     donation-webhook/   # donation-unit: aggregator webhook receiver (Contract 7)
     donation-reconciler/# donation-unit: scheduled reconciliation poller
-    feed-api/           # feed-unit: the public listPosts query (one small Lambda, guest-readable)
+    feed-api/           # feed-unit: both Contract 3 list queries (public listPosts, admin listAllPostsForAdmin) — one paginated Scan implementation
     document-shared/    # pdf-library-unit: constants, types, errors, validation, repository, S3 adapter
     document-api/       # pdf-library-unit: the one Lambda behind all five Contract 6 operations
     suggestion-shared/  # suggestion-unit: types, errors, rules (BR3.x), repository (atomic counter), metric emitter
@@ -150,19 +150,37 @@ The group is declared in `amplify/auth/resource.ts`; membership is managed
 out-of-band with the AWS CLI or console, and changing it never requires a code
 change or a deploy.
 
+**Precondition — the person must sign in through the app at least once first.**
+Every user profile in this pool is created by the Google federation flow on that
+person's first sign-in; until then they do not exist in the user pool and
+`admin-add-user-to-group` fails with `UserNotFoundException`. Ask them to open
+the app and sign in with Google, then grant the group.
+
+**Use the `Username` field, not the `sub` attribute.** For a user who came from a
+third-party IdP, `admin-add-user-to-group`'s `--username` must be
+[the username of a user from a third-party IdP][api-aautg], and Cognito names
+those profiles `[Provider name]_identifier` — here `Google_<google-subject-id>`,
+because the provider is registered as `Google`. The `sub` attribute is a
+different value and is accepted only for local (username + password) users,
+of which this pool has none. `list-users` prints both; take `Username`.
+
 ```bash
-# Look the person up by e-mail to get their username (their Cognito `sub`)
+# Look the person up by e-mail. Read the top-level `Username` field of the
+# result (e.g. "Google_11020304050607080910") — NOT the `sub` attribute.
 aws cognito-idp list-users --user-pool-id <user-pool-id> \
-  --filter 'email = "person@example.com"' --region ap-south-1
+  --filter 'email = "person@example.com"' --region ap-south-1 \
+  --query 'Users[].{Username:Username,Email:Attributes[?Name==`email`].Value|[0]}'
 
 # Grant admin
 aws cognito-idp admin-add-user-to-group --user-pool-id <user-pool-id> \
-  --username <sub> --group-name Admin --region ap-south-1
+  --username 'Google_<google-subject-id>' --group-name Admin --region ap-south-1
 
 # Revoke admin
 aws cognito-idp admin-remove-user-from-group --user-pool-id <user-pool-id> \
-  --username <sub> --group-name Admin --region ap-south-1
+  --username 'Google_<google-subject-id>' --group-name Admin --region ap-south-1
 ```
+
+[api-aautg]: https://docs.aws.amazon.com/cognito-user-identity-pools/latest/APIReference/API_AdminAddUserToGroup.html
 
 A change takes effect at the person's next token refresh — within one hour, the
 access/ID token lifetime — not instantly and not only at their next sign-in.
@@ -250,16 +268,30 @@ metrics.
 
 feed-unit owns the `Post` entity (an event, a visiting-dignitary announcement
 or, once donations ship, a donation call-out) and the six Contract 3
-operations. The five admin operations are AppSync **JavaScript resolvers**
+operations. The four single-item admin operations (`getPost`, `createPost`,
+`updatePost`, `deletePost`) are AppSync **JavaScript resolvers**
 (`amplify/data/post-resolvers/*.js`, `APPSYNC_JS` runtime) reading and
 writing the `Post` DynamoDB table directly, with no Lambda. Amplify uploads
 each resolver file verbatim, so those files import only `@aws-appsync/utils`
-and inline the few rule functions they share with
+and inline the few rule functions and constants they share with
 `amplify/data/post-shared/post-rules.ts` (the reference implementation);
-`post-rules-parity.test.ts` proves the copies agree. The public `listPosts`
-query is the one exception: it is a small Lambda, `amplify/functions/feed-api`,
-which imports `post-rules.ts` directly (Lambdas are bundled) — see "Public
-read model" for why.
+`post-rules-parity.test.ts` proves the copies agree.
+
+The two **list** queries — public `listPosts` and admin-only
+`listAllPostsForAdmin` — are instead served by one small Lambda,
+`amplify/functions/feed-api`, which imports `post-rules.ts` directly (Lambdas
+are bundled). Each has its own reason: `listPosts` because of the guest-auth
+restriction (see "Public read model"), and `listAllPostsForAdmin` because it
+must **page** through the table, which an `APPSYNC_JS` unit resolver cannot do
+— it makes exactly one data-source call per invocation. As a JavaScript
+resolver it read only the first Scan page and silently stopped showing older
+posts once the table passed roughly 100 rows, with no error. Contract 3
+declares `listAllPostsForAdmin: [Post!]!` with no arguments and no pagination
+field, so pagination cannot be exposed through the operation without breaking
+the contract; sharing the Lambda keeps the contract shape exact and returns
+every row. Both list paths now share one paginated Scan implementation and one
+page-size constant, so a pagination bug cannot reappear in one while the other
+stays correct.
 
 | Operation                                        | Who may call it                                                                         | What it does                                                                                                                                           |
 | ------------------------------------------------ | --------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -273,22 +305,29 @@ read model" for why.
 **Who enforces the admin gate.** The declarative `allow.group('Admin')` rule
 on each admin operation in `amplify/data/resource.ts` is the enforcing
 layer: AppSync rejects a caller whose `cognito:groups` claim lacks `Admin`
-before any resolver runs. Each admin resolver additionally re-checks
-`ctx.identity.groups` and calls `util.unauthorized()` — a defense-in-depth
-backstop, not the gate. Screen-level gating in the Flutter app is UX
-convenience only. The generated model operations on `Post` are disabled, so
-the table is reachable solely through these six operations.
+before any handler runs. Each admin operation additionally re-checks the
+caller's groups — `ctx.identity.groups` + `util.unauthorized()` in the four
+JavaScript resolvers, `event.identity.groups` in the `feed-api` Lambda's
+`requireAdmin` — a defense-in-depth backstop, not the gate. That backstop is
+load-bearing rather than decorative: Amplify's IAM authorization mode does not
+apply `@auth` rules to an IAM principal, and an IAM caller carries no
+`cognito:groups`, so `requireAdmin` is what refuses it. Screen-level gating in
+the Flutter app is UX convenience only. The generated model operations on
+`Post` are disabled, so the table is reachable solely through these six
+operations.
 
 **Public read model.** `listPosts` is reachable without signing in through
 the Cognito **Identity Pool's unauthenticated (guest) role**
 (`allow.guest()` + `allow.authenticated()` on the operation) — the same mode
 Contract 9 uses, with nothing that expires and no API key anywhere. The
 installed `@aws-amplify/data-schema` (1.26.x) refuses `allow.guest()` on
-`a.handler.custom` (JavaScript resolver) operations, so `listPosts` alone is
+`a.handler.custom` (JavaScript resolver) operations, so `listPosts` is
 Lambda-backed: `amplify/functions/feed-api` (128MB / 10s, `dynamodb:Scan` on
 the `Post` table only, `POST_TABLE_NAME` injected by `backend.ts`) runs a
 paginated filtered Scan, re-applies the visibility rule to every row, sorts
-most-recent-first and returns the public `Post` shape. flutter-app-unit's
+most-recent-first and returns the public `Post` shape. The same function also
+serves `listAllPostsForAdmin`, under that operation's own `Admin`-group rule —
+sharing a handler never shares an authorization rule. flutter-app-unit's
 `services/feed_service.dart` calls `listPosts` with
 `authorizationMode: identityPool` when no user is signed in and with the
 default `userPool` mode otherwise; every other feed operation uses
@@ -318,8 +357,9 @@ soft delete is a MODIFY record whose OLD image lacks `deletedAt` while the NEW
 image has it — detectable only because the OLD image is carried. feed-unit
 owns the stream setting; the consuming event-source mapping is reminder-unit's.
 
-**Why a Scan.** Both list operations Scan the table with a filter (the
-Lambda follows `LastEvaluatedKey` until exhausted). The table is sized at a
+**Why a Scan.** Both list operations Scan the table with a filter, through the
+same `feed-api` helper, which follows `LastEvaluatedKey` until exhausted and
+therefore never returns a truncated list. The table is sized at a
 few hundred rows for the app's lifetime, so an index would add cost without
 benefit today; `feed-api/handler.ts` names the `feedIndex` GSI to add if the
 table ever grows.
@@ -332,7 +372,11 @@ rules on five operations. Re-check on every change to
 access appears on `listPosts` (and `Post` read) only; every admin operation
 still carries `allow.group('Admin')` and nothing broader; the `feed-api`
 role holds `dynamodb:Scan` on the `Post` table and nothing else;
-`post-schema.test.ts` still asserts the rules.
+`post-schema.test.ts` still asserts the rules. Because `feed-api` now serves
+both a public and an admin operation, also re-check that its handler still
+dispatches on `event.info.fieldName` and calls `requireAdmin` on the
+`listAllPostsForAdmin` branch — a shared handler must never let the public
+branch reach the admin data set.
 
 **Testing.** `npm run test:feed` runs the Unit's 49 tests: schema/SDL
 assertions, the pure rules, the `feed-api` Lambda against a fake document
@@ -542,7 +586,9 @@ final.
 
 **The EventBridge Scheduler model (NFR-PERF.3).** Each new Reminder gets two
 ONE-TIME schedules in this Unit's own group
-(`reminder-unit-schedules-<stack>`): `fire-<id>` → `deliver-push` at
+(`reminder-schedules-<8-hex>`, built from the stack's GUID because
+`AWS::Scheduler::ScheduleGroup` caps `Name` at 64 characters and Amplify's
+stack names alone exceed that): `fire-<id>` → `deliver-push` at
 `initialFireAt` (re-pointed to `snoozeFireAt` on snooze) and `clear-<id>` →
 `auto-clear` at the post's `dateTime`. Schedules are `at(...)` expressions in
 UTC with `ActionAfterCompletion: DELETE`, so they remove themselves after
@@ -699,11 +745,11 @@ Every GraphQL call names its AppSync auth mode explicitly. This table is derived
 from `amplify/data/resource.ts` and is enforced in code by
 `publicReadAuthMode()` plus the per-service constants:
 
-| Operation(s) | Auth mode | Why |
-|---|---|---|
-| `listPosts`, `listDocuments`, `getDocumentDownloadUrl` | `identityPool` when signed out, `userPool` when signed in | public reads; the schema carries `allow.guest()` + `allow.authenticated()` |
-| `myReminders`, `registerDeviceToken`, `setRemindersEnabled`, `snoozeReminder`, `cancelReminder` | **always `identityPool`**, signed in or not | Contract 9 is scoped to the device's Identity Pool id, never to a Google sign-in (FR7.8, BR7.6) |
-| everything else | `userPool` | the schema's `defaultAuthorizationMode` |
+| Operation(s)                                                                                    | Auth mode                                                 | Why                                                                                             |
+| ----------------------------------------------------------------------------------------------- | --------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| `listPosts`, `listDocuments`, `getDocumentDownloadUrl`                                          | `identityPool` when signed out, `userPool` when signed in | public reads; the schema carries `allow.guest()` + `allow.authenticated()`                      |
+| `myReminders`, `registerDeviceToken`, `setRemindersEnabled`, `snoozeReminder`, `cancelReminder` | **always `identityPool`**, signed in or not               | Contract 9 is scoped to the device's Identity Pool id, never to a Google sign-in (FR7.8, BR7.6) |
+| everything else                                                                                 | `userPool`                                                | the schema's `defaultAuthorizationMode`                                                         |
 
 **Client-side gating is a UX convenience, never the security boundary**
 (NFR-AUTHZ.2). Hiding the Admin entry from a non-admin and redirecting a
@@ -736,10 +782,10 @@ the stale date. Do not "fix" this toward full correctness without asking.
 Donate, My Donations, PDF Library and Admin PDF Library are fully implemented and
 tested, but compiled out by default (`lib/utils/feature_flags.dart`):
 
-| Flag | Default | Turn it on when |
-|---|---|---|
-| `DONATIONS_ENABLED` | `false` | donation-unit's payment-aggregator account exists and FR5.4's tax-exemption precondition clears |
-| `PDF_LIBRARY_ENABLED` | `false` | the builder chooses to surface the library |
+| Flag                  | Default | Turn it on when                                                                                 |
+| --------------------- | ------- | ----------------------------------------------------------------------------------------------- |
+| `DONATIONS_ENABLED`   | `false` | donation-unit's payment-aggregator account exists and FR5.4's tax-exemption precondition clears |
+| `PDF_LIBRARY_ENABLED` | `false` | the builder chooses to surface the library                                                      |
 
 ```bash
 flutter run --dart-define=DONATIONS_ENABLED=true --dart-define=PDF_LIBRARY_ENABLED=true
@@ -867,6 +913,7 @@ Dart code or to run the test suite.
    committed. **When it is absent the release build falls back to debug
    signing** so a fresh clone still builds — check it is present before
    producing a store artifact.
+
 4. `flutter build appbundle --release` / `flutter build ipa --release`.
 5. Work through the release checklist below.
 
@@ -898,7 +945,7 @@ the app side that means a change to any of:
 - `lib/services/donation_service.dart` and `lib/screens/donate_screen.dart`,
   once donations ship.
 
-Ask of each one: *does this change which server-side rule decides access?* The
+Ask of each one: _does this change which server-side rule decides access?_ The
 answer should always be no — the client only decides what to show.
 
 ### Localization
@@ -949,3 +996,44 @@ key.
   Pipeline stage. If Amplify Hosting's own pipeline is used for deploys, a test
   step must be added to `amplify.yml` deliberately; it runs no app tests by
   default.
+
+## Dependency advisory triage
+
+> **Triaged 2026-10-02** under `team.md` Q8, which accepts "Dependabot alerts
+> clear, **or explicitly triaged**". Recorded here so each merge does not
+> re-litigate the same 21 findings.
+
+`npm audit` reports 21 vulnerabilities (18 high, 3 moderate). **All of them are
+in `devDependencies` — the Amplify build and deploy toolchain. None is in a
+runtime dependency.**
+
+Runtime `dependencies` are the AWS SDK clients plus `google-auth-library`;
+none is flagged. Nothing vulnerable executes in a Lambda or ships inside the
+iOS or Android app.
+
+Root advisories, all reached transitively through `@aws-amplify/backend` and
+`@aws-amplify/backend-cli`:
+
+| Package | Severity | Issue |
+|---|---|---|
+| `immutable` | high | Prototype pollution; `List` trie overflow DoS; hash-collision DoS |
+| `brace-expansion` | high | DoS via uncontrolled recursion |
+| `lodash` | high | Code injection via `_.template` |
+| `csv-parse` | moderate | Prototype replacement via the columns path |
+| `mysql2` | — | Decompression-bomb DoS (unused — this project has no MySQL) |
+
+**Why accepted rather than fixed:** the only remedy `npm audit fix --force`
+offers is downgrading `@aws-amplify/backend-cli` from 1.x to **0.11.1**, a
+breaking change to the entire deploy toolchain — the same toolchain that
+provisions the backend. Trading a working deploy path for advisories that
+cannot reach production is a poor exchange.
+
+**Exploitability here:** these are reachable only by feeding malicious input to
+the local `ampx`/CDK CLI during a build. That presupposes an attacker already
+executing code on the builder's machine or in CI, at which point the signing
+keys and AWS credentials are the real exposure, not `lodash`.
+
+**Revisit when:** Amplify bumps its transitive dependencies (watch the
+`@aws-amplify/backend` changelog), or if any flagged package ever appears in
+runtime `dependencies`. Re-run `npm audit --audit-level=high` at that point
+rather than assuming this triage still holds.

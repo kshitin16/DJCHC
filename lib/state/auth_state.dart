@@ -39,6 +39,12 @@ class AuthState extends ChangeNotifier {
   /// Contract 1's `email` claim, or `null` when signed out. Never logged.
   String? get email => _session.email;
 
+  /// The user's display name from Google's `given_name`/`family_name` claims,
+  /// or `null` when signed out or when Google supplied neither. Personal data:
+  /// never logged, and never sent to Crashlytics (security-design.md payload
+  /// scoping).
+  String? get displayName => _session.displayName;
+
   /// Contract 2: `cognito:groups` contains `Admin`. A UX gate only.
   bool get isAdmin => _session.isAdmin;
 

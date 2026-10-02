@@ -9,8 +9,8 @@
   },
   "scripts": {
     "lint": "eslint .",
-    "format": "prettier --write amplify jest.config.ts eslint.config.js README.md",
-    "format:check": "prettier --check amplify jest.config.ts eslint.config.js README.md",
+    "format": "prettier --write amplify jest.config.ts eslint.config.js",
+    "format:check": "prettier --check amplify jest.config.ts eslint.config.js",
     "typecheck": "tsc --noEmit",
     "test": "NODE_OPTIONS=--experimental-vm-modules jest",
     "test:auth": "NODE_OPTIONS=--experimental-vm-modules jest --rootDir . amplify/auth amplify/backend.test.ts",

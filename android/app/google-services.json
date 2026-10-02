@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "383008944520",
+    "project_id": "project-1ddee384-1b88-4565-bf1",
+    "storage_bucket": "project-1ddee384-1b88-4565-bf1.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:383008944520:android:9761fe525e970ceb59ca3d",
+        "android_client_info": {
+          "package_name": "in.sarovarjinalaya.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "383008944520-uiopljr1o6po0h0r8btuhj6qk7cheelb.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAaUwvdSNZWbvCZDutZ1Spw_gksBgvri98"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "383008944520-uiopljr1o6po0h0r8btuhj6qk7cheelb.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

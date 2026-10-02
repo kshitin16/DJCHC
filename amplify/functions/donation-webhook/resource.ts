@@ -31,4 +31,11 @@ export const donationWebhook = defineFunction({
     DONATION_AGGREGATOR_WEBHOOK_SECRET: secret('DONATION_AGGREGATOR_WEBHOOK_SECRET'),
     DONATION_WEBHOOK_SIGNATURE_HEADER: 'x-razorpay-signature',
   },
+  logging: {
+    // 90 days — financial activity (NFR-OBS.2), as resolved at Observability Setup Q2: CloudWatch
+    // sets retention per log GROUP, not per level, so the per-level
+    // split NFR-OBS.2 asked for cannot be configured. Unset means
+    // logs are kept forever, which is both a cost and a privacy leak.
+    retention: '3 months',
+  },
 });

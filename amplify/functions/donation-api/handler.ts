@@ -18,7 +18,11 @@
  * - `initiateDonation`: flag → validate (BR5.2, BR5.3) → create INITIATED →
  *   aggregator checkout (BR5.1: tokenized flow, no card/UPI data here) →
  *   PENDING → `DonationInitiation`. On checkout failure the row stays
- *   INITIATED and a plain-language error is thrown (retryable).
+ *   INITIATED and a plain-language error is thrown (retryable). If the
+ *   INITIATED → PENDING write fails AFTER the checkout was created the donor
+ *   still gets the checkout (revision 1, review F-3): the row stays INITIATED,
+ *   the aggregator reference is logged, the webhook can still settle it by
+ *   `order_id`, and the reconciler's orphan sweep reports it.
  * - `cancelDonation`: flag → load → owner check (BR5.6) → state check
  *   (SUCCEEDED + RECURRING) → aggregator `stopMandate` → CANCELLED. The row is
  *   never CANCELLED before the aggregator acknowledges.
@@ -130,7 +134,22 @@ export function createHandler(deps: DonationApiDeps) {
       throw new DonationCheckoutError();
     }
 
-    await deps.repository.markPending(donation.id, session.aggregatorTransactionId);
+    try {
+      await deps.repository.markPending(donation.id, session.aggregatorTransactionId);
+    } catch (error) {
+      // Revision 1, review F-3: the checkout EXISTS at this point, so refusing
+      // the donor here would strand a real payable session behind an error. The
+      // row stays INITIATED; that is recoverable rather than orphaned because
+      // (a) the aggregator's webhook looks the donation up by `order_id`
+      // (= `Donation.id`) and `applySettlement` accepts an INITIATED row, and
+      // (b) the reconciler's orphan sweep reports rows stuck INITIATED. The
+      // aggregator reference is logged so it is never lost.
+      logger.error('markPending failed after checkout was created; donation left INITIATED', {
+        donationId: donation.id,
+        aggregatorTransactionId: session.aggregatorTransactionId,
+        ...describeError(error),
+      });
+    }
     logger.info('Donation initiated', { donationId: donation.id, donationType });
     return {
       donationId: donation.id,

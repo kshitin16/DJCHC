@@ -1,0 +1,110 @@
+# CI for the Sarovar Jinalaya temple community app.
+#
+# Added by donation-unit's Code Generation revision 1 (review finding F-2) to
+# close an enforcement gap, NOT as ownership of the CI Pipeline stage (3.7):
+# `jest.config.ts` declares the team's affirmed 80% line-coverage floor
+# (team.md, Testing Posture Q6) but `npm test` runs without `--coverage`, so
+# until this workflow existed nothing actually enforced the floor. Stage 3.7 may
+# extend or restructure this file (caching strategy, deploy jobs, matrix builds);
+# what must not be removed is that a push or pull request to `main` fails when
+# lint, type-check, tests or the coverage floor fail.
+#
+# team.md § Testing Posture (Q7) specifies exactly this shape: one GitHub
+# Actions workflow on every push/PR to `main` running `flutter analyze` +
+# `flutter test --coverage` on the app side and ESLint + `tsc --noEmit` + Jest
+# on the Amplify Gen2 / TypeScript backend side, blocking merge on failure.
+# It is the project's only automated guard against a skipped or weakened test,
+# because there is no second reviewer.
+#
+# Note (team.md Q7): if Amplify Hosting's own build pipeline is used for
+# deploys, a test step has to be added to `amplify.yml` deliberately — Amplify
+# Hosting does not run app-level tests by default.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+# A newer push to the same ref supersedes an in-flight run.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  backend:
+    name: Backend (Amplify Gen2 / TypeScript)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      # Code formatting only. README.md is deliberately excluded: it has
+      # hand-aligned tables that prettier would reflow, and reformatting
+      # documentation to make a gate green is a separate decision. CI Pipeline
+      # (3.7, Q3) narrowed `npm run format:check` to the same paths, so the local
+      # script and this gate now agree rather than diverging.
+      - name: Format check (code)
+        run: npm run format:check
+
+      - name: Type check
+        run: npm run typecheck
+
+      # --coverage is what arms `coverageThreshold.global.lines: 80` in
+      # jest.config.ts. Never drop this flag and never lower that number to make
+      # this step pass (org.md: a defined coverage floor may not be weakened).
+      - name: Test with coverage (enforces the 80% line floor)
+        run: NODE_OPTIONS=--experimental-vm-modules npx jest --coverage
+
+  app:
+    name: App (Flutter)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Pinned rather than `channel: stable` (CI Pipeline 3.7, Q2). pubspec.yaml
+      # declares `sdk: ^3.13.3`, so a newer stable release could change analyzer
+      # or lint behaviour and turn CI red for reasons unrelated to the change
+      # under test. This version matches the local toolchain; bumping it is a
+      # deliberate commit.
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 3.47.4
+          channel: stable
+          cache: true
+
+      - name: Install packages
+        run: flutter pub get
+
+      # lib/amplify_outputs.dart is gitignored (it holds real backend config) but
+      # lib/main.dart imports it, so a fresh checkout does not compile. This stub
+      # writes a '{}' placeholder, which is enough for analyze and widget tests.
+      # Without it every step below fails at module load — the defect that made
+      # this workflow fail on its first run (CI Pipeline 3.7, Q1).
+      - name: Stub Amplify config
+        run: tool/stub_amplify_outputs.sh
+
+      - name: Verify formatting
+        run: dart format --output=none --set-exit-if-changed lib test integration_test
+
+      - name: Analyze
+        run: flutter analyze
+
+      # Widget and unit tests only. `integration_test/` needs a device or
+      # emulator and is not run here.
+      - name: Test with coverage
+        run: flutter test --coverage

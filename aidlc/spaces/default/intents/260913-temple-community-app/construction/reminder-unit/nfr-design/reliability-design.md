@@ -63,3 +63,12 @@ DynamoDB's standard managed replication + NFR4.1 encryption for both tables. Eve
 ## Auto-clear reliability (BR7.4)
 
 The auto-clear schedule (Q1) fires independently of whether the fire-schedule already fired — both are created at Reminder-creation/reschedule time and are independent EventBridge entities, so a failure in one does not affect the other's own scheduled firing.
+
+> **Decided 2026-10-01 at Incident Response (Q4), then carried here when that
+> stage reported skipped.** A failed EventBridge Scheduler invocation is
+> retried automatically, bounded by a fixed attempt cap, and alarm A-4 in
+> `operation/observability-setup/alarms.md` still fires so the retry is visible
+> rather than silent. This is a partial mitigation of the residual
+> schedule-sync risk named above: it recovers a transient delivery failure
+> without closing the gap that there is no reconciliation job for a schedule
+> left out of sync. Not yet implemented.

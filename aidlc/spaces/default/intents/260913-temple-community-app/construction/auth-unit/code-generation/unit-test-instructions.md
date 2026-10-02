@@ -10,36 +10,47 @@
 Exact, unit-scoped command (runs only test files under `amplify/auth/` plus `amplify/backend.test.ts`):
 
 ```bash
-npx jest --rootDir . amplify/auth amplify/backend.test.ts
+NODE_OPTIONS=--experimental-vm-modules npx jest --rootDir . amplify/auth amplify/backend.test.ts
 ```
 
-Also wired as `npm run test:auth`. The command is runnable (exit 0) immediately after plan Step 2.2 — before the first test file exists it is verified once with `--passWithNoTests`; from Step 4 onward the script deliberately omits that flag so a missing test file fails.
+The `NODE_OPTIONS=--experimental-vm-modules` prefix is **required**, not optional:
+the backend is `"type": "module"` and `jest.config.ts` uses the `ts-jest` ESM
+preset, so without it Jest cannot load an ES module and the run fails before any
+test executes. Also wired as `npm run test:auth`, which sets the same prefix.
+
+The command is runnable (exit 0) immediately after plan Step 2.2 — before the first test file exists it is verified once with `--passWithNoTests`; from Step 4 onward the script deliberately omits that flag so a missing test file fails.
 
 With coverage for this Unit only:
 
 ```bash
-npx jest --rootDir . amplify/auth amplify/backend.test.ts --coverage --collectCoverageFrom='amplify/auth/**/*.ts'
+NODE_OPTIONS=--experimental-vm-modules npx jest --rootDir . amplify/auth amplify/backend.test.ts --coverage --collectCoverageFrom='amplify/auth/**/*.ts'
 ```
 
 Do not use a bare `npm test` / `npx jest` for this Unit — Build and Test runs every Unit's commands, and an unscoped command would rerun the whole backend suite once per Unit.
 
-## Test files and cases (8 tests, smoke-level — walking-skeleton Bolt)
+## Test files and cases (13 tests, smoke-level — walking-skeleton Bolt)
 
 | File | Tests | What each asserts |
 |---|---|---|
 | `amplify/auth/resource.test.ts` | 6 | (1) `authConfig.groups` is exactly `['Admin']`; (2) Google `clientId`/`clientSecret` are `secret()` references, not string literals; (3) Google scopes include `openid` and `email`; (4) `callbackUrls` contains `sarovarjinalaya://callback/` and `logoutUrls` contains `sarovarjinalaya://signout/`; (5) `attributeMapping.email === 'email'`; (6) `loginWith.email === true` and no `phone` login |
-| `amplify/backend.test.ts` | 2 | (7) `tokenPolicy` is 60 min access / 60 min ID / 30 days refresh with matching units; (8) `selfSignUpDisabled === true` |
+| `amplify/backend.test.ts` | 7 | Declared policy: (7) `tokenPolicy` is 60 min access / 60 min ID / 30 days refresh with matching units; (8) `selfSignUpDisabled === true`. Applied policy — `applyTokenPolicy` driven against a stand-in for the L1 CFN resources: (9) it writes the three validities and `tokenValidityUnits` onto the App Client; (10) it sets `generateSecret: false`; (11) it throws if `generateSecret` is already `true`; (12) it sets `allowAdminCreateUserOnly: true` on the User Pool, merging into an existing `adminCreateUserConfig` without clobbering it; (13) it does not spread an unresolved CDK token into that merged config |
+
+Revision 1 note: tests 9–13 were added because tests 7–8 assert only that the
+policy is *declared*. Nothing asserted that `amplify/backend.ts` *applies* it, and
+the original evidence for that was a throwaway CDK synth that was run once and
+deleted. See "Mocking / stubbing guidance" for why `Template.fromStack` over the
+real backend is not available here.
 
 ## Expected coverage
 
-- This is the walking-skeleton Bolt (Bolt 1): the affirmed bar is smoke-level (team.md Q5), so **no coverage threshold is enforced** in `jest.config.ts` for this Unit's run. Expected line coverage of `amplify/auth/*.ts` is nonetheless ~100%, since the files are declarative configuration fully exercised by the assertions.
-- From the second Bolt onward the 80% line-coverage floor (team.md Q6) is added to `jest.config.ts` as `coverageThreshold.global.lines: 80` and never lowered.
+- This is the walking-skeleton Bolt (Bolt 1): the affirmed bar is smoke-level (team.md Q5), so **this Unit adds no coverage threshold of its own**. Expected line coverage of `amplify/auth/*.ts` is nonetheless ~100%, since the files are declarative configuration fully exercised by the assertions.
+- Revision 1 correction: `jest.config.ts` is a shared file, and donation-unit — the first Unit past the skeleton — has since added the affirmed 80% line-coverage floor (team.md Q6) as `coverageThreshold.global.lines: 80`. It is global, so the `--coverage` command above is now checked against it; `amplify/auth/**/*.ts` clears it comfortably. That floor is never lowered. (`npm run test:auth` passes no `--coverage`, so the plain unit run does not evaluate it.)
 
 ## Mocking / stubbing guidance
 
 - Do **not** mock `@aws-amplify/backend`. `resource.ts` exports the raw `authConfig` object separately from `defineAuth(authConfig)`, so tests import `authConfig` and assert on it directly; `defineAuth` is invoked at import time but never synthesized.
 - `secret('NAME')` returns a `BackendSecret` object. Test (2) asserts the values are objects (not `typeof 'string'`) — that is the "not a literal" check. Do not compare against a fake secret value.
-- No CDK synthesis in unit tests. The `cfnUserPoolClient` / `cfnUserPool` overrides in `backend.ts` are covered by testing the `token-policy.ts` constants they read (tests 7–8); synthesizing the backend belongs to `ampx sandbox` / the deploy pipeline, not to this Unit's Jest run.
+- No CDK synthesis in unit tests, and none is available: importing `amplify/backend.ts` under Jest throws `No context value present for amplify-backend-namespace key`, because `defineBackend` reads a CDK context key that only `ampx` supplies. A `Template.fromStack` assertion over the real backend would therefore require reimplementing the `ampx` bootstrap. Instead, the overrides live in `amplify/auth/token-policy.ts` as the pure function `applyTokenPolicy(cfnUserPoolClient, cfnUserPool)`, which `backend.ts` calls once; tests 9–13 drive that function against a plain object standing in for the CFN resources and assert what it writes. Use the exported `TokenPolicyClientTarget` / `SelfSignUpPoolTarget` types for those stand-ins — do not mock `aws-cdk-lib`.
 
 ## Test data management
 

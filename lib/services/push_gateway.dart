@@ -14,10 +14,31 @@ import 'gateways.dart';
 
 /// FCM-backed [PushGateway].
 class FirebasePushGateway implements PushGateway {
-  FirebasePushGateway({FirebaseMessaging? messaging})
-    : _messaging = messaging ?? FirebaseMessaging.instance;
+  FirebasePushGateway({FirebaseMessaging? messaging}) : _injected = messaging;
 
-  final FirebaseMessaging _messaging;
+  final FirebaseMessaging? _injected;
+
+  /// Resolved LAZILY, on first use, and never in the constructor.
+  ///
+  /// `FirebaseMessaging.instance` throws `[core/no-app]` until
+  /// `Firebase.initializeApp()` has run. `main()` constructs this gateway on
+  /// the BLOCKING path before the first frame, while `AppBootstrap.initFirebase`
+  /// deliberately runs on the deferred path afterwards
+  /// (performance-design.md) — so at construction time Firebase is guaranteed
+  /// NOT to be initialized.
+  ///
+  /// Resolving it in the constructor's initializer list therefore threw before
+  /// `runApp` was ever reached: a white screen and an immediate exit, with none
+  /// of this class's own try/catch blocks able to help, because the object
+  /// could not be built at all. Every method below is defensively wrapped; the
+  /// constructor was the one path that was not.
+  ///
+  /// The tests never caught it because they always inject a fake through
+  /// `messaging`, so the `FirebaseMessaging.instance` branch is only ever
+  /// evaluated in a real app.
+  ///
+  /// Found on the first run against a real device, 2026-10-01.
+  FirebaseMessaging get _messaging => _injected ?? FirebaseMessaging.instance;
 
   /// The FCM `data` key reminder-unit's `deliver-push` puts the post id under,
   /// so a notification tap can deep-link to that event's date on Calendar.

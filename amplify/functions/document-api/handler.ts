@@ -19,6 +19,22 @@
  *   `event.identity.groups` on the three admin operations and throws
  *   otherwise. Identity is read ONLY from `event.identity`, which AppSync
  *   fills from the verified JWT — never from arguments or headers.
+ *
+ * **CORRECTED 2026-10-01, against the first real deployment.** The claim above
+ * that AppSync filters the caller before this code runs is FALSE for this
+ * Lambda-backed operation. `allow.group('Admin')` is declared in
+ * `amplify/data/resource.ts`, but Amplify Data only translates it into an
+ * `@aws_cognito_user_pools(cognito_groups:["Admin"])` directive for
+ * `a.handler.custom(...)` JS resolvers. For `a.handler.function(...)` it
+ * degrades silently to plain `@aws_cognito_user_pools` — any authenticated
+ * Cognito user — with no warning at synth or deploy time. Verified by reading
+ * the deployed SDL with `aws appsync get-introspection-schema
+ * --include-directives`.
+ *
+ * So `requireAdmin` below is NOT a backstop here. It is THE enforcing layer:
+ * the only thing between an ordinary signed-in worshipper and this operation.
+ * Do not remove or weaken it. The test asserting a non-admin is refused exists
+ * to make that impossible to do by accident.
  * - Flutter screens (flutter-app-unit): UX convenience only.
  *
  * ## The upload flow (functional-spec.md, Upload Document)

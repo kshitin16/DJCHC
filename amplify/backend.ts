@@ -36,10 +36,13 @@
  *   `feed-unit/nfr-design/security-design.md`): reminder-unit's handler needs
  *   the OLD image to see `deletedAt` go from absent to set. feed-unit owns only
  *   the stream; the consuming event-source mapping is reminder-unit's.
- * - `feedApi` — the one feed-unit Lambda (plan Revision 2): the public
- *   `listPosts` query, granted `dynamodb:Scan` on the `Post` table only and
- *   told its name. The five admin operations are AppSync JS resolvers
- *   declared in `./data/resource.ts` and need no wiring here.
+ * - `feedApi` — the one feed-unit Lambda (plan Revision 2): both Contract 3
+ *   list queries, the public `listPosts` and the admin-only
+ *   `listAllPostsForAdmin` (Revision 1, review finding F-1 — it must page
+ *   through the table, which an APPSYNC_JS resolver cannot do), granted
+ *   `dynamodb:Scan` on the `Post` table only and told its name. The four
+ *   single-item admin operations are AppSync JS resolvers declared in
+ *   `./data/resource.ts` and need no wiring here.
  *
  * pdf-library-unit (U5) adds, after the feed block:
  * - `storage` — the project's first S3 bucket (`./storage/resource`), holding
@@ -90,7 +93,7 @@
  *   shared backend, admin-only ones included; review R-01). Permission
  *   changes here fall under project.md's self-review mandate.
  */
-import { Duration, Stack } from 'aws-cdk-lib';
+import { Duration, Fn, Stack } from 'aws-cdk-lib';
 import { PolicyStatement, Role, ServicePrincipal } from 'aws-cdk-lib/aws-iam';
 import { FunctionUrlAuthType, StartingPosition } from 'aws-cdk-lib/aws-lambda';
 import { DynamoEventSource } from 'aws-cdk-lib/aws-lambda-event-sources';
@@ -98,7 +101,7 @@ import { Bucket } from 'aws-cdk-lib/aws-s3';
 import { CfnScheduleGroup } from 'aws-cdk-lib/aws-scheduler';
 import { defineBackend } from '@aws-amplify/backend';
 import { auth } from './auth/resource';
-import { selfSignUpDisabled, tokenPolicy } from './auth/token-policy';
+import { applyTokenPolicy } from './auth/token-policy';
 import { data } from './data/resource';
 import { postStreamViewTypeCdk } from './data/post-shared/post-table-config';
 import { DOCUMENT_KEY_PREFIX } from './functions/document-shared/constants';
@@ -150,43 +153,21 @@ export const backend = defineBackend({
   autoClear,
 });
 
+// --- auth-unit (U1): Cognito token / sign-up policy -------------------------
+// The application itself lives in `./auth/token-policy` (`applyTokenPolicy`) so
+// it is covered by a real unit test: this file cannot be imported under Jest,
+// so anything written inline here would be verifiable only by a deploy.
+// It sets the 60 min / 60 min / 30 day token lifetimes (BR1.3, NFR3.1), pins
+// the App Client PUBLIC (no client secret — NFR3.1/NFR3.4, throwing at synth if
+// one were ever turned on), and merges `allowAdminCreateUserOnly: true` into
+// the pool's existing `adminCreateUserConfig` (BR1.1, BR1.4).
+//
+// NOTE on the hosted UI's `SupportedIdentityProviders`: Amplify adds `COGNITO`
+// alongside `Google` because the pool declares an email sign-in attribute
+// (`loginWith.email`, required by `defineAuth`). It is inert here — see the
+// explanation on `loginWith.email` in `./auth/resource.ts`.
 const { cfnUserPool, cfnUserPoolClient } = backend.auth.resources.cfnResources;
-
-// --- App Client: token lifetimes (BR1.3, NFR3.1) ---------------------------
-cfnUserPoolClient.accessTokenValidity = tokenPolicy.accessTokenValidity;
-cfnUserPoolClient.idTokenValidity = tokenPolicy.idTokenValidity;
-cfnUserPoolClient.refreshTokenValidity = tokenPolicy.refreshTokenValidity;
-cfnUserPoolClient.tokenValidityUnits = tokenPolicy.tokenValidityUnits;
-
-// --- App Client: PUBLIC client, PKCE (NFR3.1) ------------------------------
-// Fail fast at synth time if anything upstream ever turns on a client secret:
-// a secret inside a distributed mobile binary is extractable, and the Flutter
-// client (flutter-app-unit) is built for the secret-less PKCE flow.
-if (cfnUserPoolClient.generateSecret === true) {
-  throw new Error(
-    'auth-unit: the Cognito App Client must be PUBLIC (no client secret) for the ' +
-      'Authorization Code + PKCE flow (NFR3.1); GenerateSecret was set to true.',
-  );
-}
-cfnUserPoolClient.generateSecret = false;
-
-// --- User Pool: no self-registration (BR1.1, BR1.4) ------------------------
-// Merge into whatever `defineAuth` already placed on AdminCreateUserConfig
-// (e.g. the invite message template) rather than replacing it wholesale.
-const existingAdminCreateUserConfig = cfnUserPool.adminCreateUserConfig;
-cfnUserPool.adminCreateUserConfig = {
-  ...(isPlainObject(existingAdminCreateUserConfig) ? existingAdminCreateUserConfig : {}),
-  allowAdminCreateUserOnly: selfSignUpDisabled,
-};
-
-/** True for a plain property bag, false for `undefined` or a CDK `IResolvable` token. */
-function isPlainObject(value: unknown): value is Record<string, unknown> {
-  return (
-    typeof value === 'object' &&
-    value !== null &&
-    !('resolve' in value && typeof (value as { resolve: unknown }).resolve === 'function')
-  );
-}
+applyTokenPolicy(cfnUserPoolClient, cfnUserPool);
 
 // ===========================================================================
 // donation-unit (U4)
@@ -258,8 +239,14 @@ if (!postTableWrapper) {
 postTableWrapper.streamSpecification = { streamViewType: postStreamViewTypeCdk };
 
 // --- feed-api Lambda: least-privilege read of the Post table ---------------
-// `listPosts` only ever Scans the table (no index, no writes), so that is the
-// whole grant. The admin operations never pass through this function.
+// Both list queries it serves — `listPosts` and `listAllPostsForAdmin` — only
+// ever Scan the table (no index, no writes), so that is the whole grant. It is
+// unchanged by Revision 1 adding the second operation: same table, same action.
+// The four single-item admin operations never pass through this function.
+//
+// This grant does NOT make the admin list reachable by a non-admin: the
+// operation's `allow.group('Admin')` rule (the enforcing layer) and the
+// handler's `requireAdmin` backstop both sit in front of it.
 const postTable = backend.data.resources.tables['Post'];
 if (!postTable) {
   throw new Error('feed-unit: the Post model is missing from the Amplify Data schema');
@@ -425,12 +412,52 @@ for (const modelName of ['Reminder', 'DeviceToken']) {
   wrapper.pointInTimeRecoveryEnabled = true;
 }
 
+// --- Point-in-time recovery for the tables no Unit claimed ------------------
+// Each Unit above enabled PITR on the tables it owned: donation-unit on
+// `Donation`, suggestion-unit on `Suggestion`, reminder-unit on `Reminder` and
+// `DeviceToken`. That left `Post`, `Document` and `SuggestionDailyCount` with
+// no owner and therefore no PITR.
+//
+// Environment Provisioning (Q1) decided PITR on ALL SEVEN tables, and
+// `operation/environment-provisioning/environment-inventory.md` records every
+// one as Required. The gap was found by querying the first deployed sandbox:
+// four tables reported ENABLED and three reported DISABLED. This closes it.
+//
+// Without PITR a deleted or corrupted row is unrecoverable — there is no undo
+// in DynamoDB. The feed's posts and the PDF library's metadata are both
+// re-creatable by hand, but only by someone who remembers what was there.
+for (const modelName of ['Post', 'Document', 'SuggestionDailyCount']) {
+  const wrapper = backend.data.resources.cfnResources.amplifyDynamoDbTables[modelName];
+  if (!wrapper) {
+    throw new Error(
+      `cross-unit PITR: cannot enable PITR — the ${modelName} table wrapper was not found`,
+    );
+  }
+  wrapper.pointInTimeRecoveryEnabled = true;
+}
+
 // --- EventBridge Scheduler: dedicated group + execution role (NFR-PERF.3) --
 // Lives in the data stack with the four Lambdas (all `resourceGroupName:
 // 'data'`), so no cross-stack reference is introduced. The group name is
-// unique per environment through the stack name.
+// unique per environment through the stack's own GUID.
+//
+// It is built from the stack ID rather than the stack NAME, and that is not a
+// style choice. `AWS::Scheduler::ScheduleGroup` caps `Name` at 64 characters,
+// while Amplify's generated stack names run to ~84 on their own — the earlier
+// `reminder-unit-schedules-${stackName}` form synthesized to 108 characters and
+// CloudFormation rejected the whole data stack at property validation, in every
+// environment, sandbox and branch alike. The stack name also cannot simply be
+// truncated here: it is a CloudFormation token (`Ref: AWS::StackName`) that has
+// no value at synth time, so string operations on it do nothing.
+//
+// A stack ID looks like
+// `arn:aws:cloudformation:<region>:<account>:stack/<name>/<guid>`, so selecting
+// index 2 of a '/' split yields the GUID and index 0 of a '-' split on that
+// yields its first 8 hex characters. The result is 27 characters, stable for
+// the life of the stack, and unique per environment.
 const reminderStack = Stack.of(backend.reminderApi.resources.lambda);
-const reminderScheduleGroupName = `reminder-unit-schedules-${reminderStack.stackName}`;
+const reminderStackGuid = Fn.select(2, Fn.split('/', reminderStack.stackId));
+const reminderScheduleGroupName = `reminder-schedules-${Fn.select(0, Fn.split('-', reminderStackGuid))}`;
 const reminderScheduleGroup = new CfnScheduleGroup(reminderStack, 'ReminderScheduleGroup', {
   name: reminderScheduleGroupName,
 });

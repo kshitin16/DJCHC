@@ -18,6 +18,17 @@
 
 Declarative AppSync auth refusals (BR3.3) are NOT captured in this Unit's own application logging — see NFR-OBS.4 below.
 
+> **Amended 2026-10-01 at Observability Setup.** CloudWatch Logs sets retention
+> per log GROUP, not per log level, so the per-level split above cannot be
+> configured as written. Resolved at that stage (Q2): **30 days on every log
+> group except `donation-webhook` and `donation-reconciler`, which are 90 days.**
+> ERROR lines outside the two donation functions are therefore retained 30 days
+> rather than 90 — a deliberate narrowing chosen with the trade-off visible, and
+> one that reduces how long personal data in log context survives
+> (`environment-provisioning/validation-report.md` check C-5). The per-level
+> table above remains the record of what was originally asked for. See
+> `operation/observability-setup/log-queries.md`.
+
 ## NFR-OBS.3 — Tracing
 
 Not applicable at this app's scale — each request path (submit, view own, view all) is a single AppSync-to-DynamoDB hop.

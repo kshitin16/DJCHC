@@ -34,4 +34,11 @@ export const donationApi = defineFunction({
     DONATIONS_ENABLED: String(DONATIONS_ENABLED),
     DONATION_AGGREGATOR_API_KEY: secret('DONATION_AGGREGATOR_API_KEY'),
   },
+  logging: {
+    // 30 days — the project default (NFR-OBS.2), as resolved at Observability Setup Q2: CloudWatch
+    // sets retention per log GROUP, not per level, so the per-level
+    // split NFR-OBS.2 asked for cannot be configured. Unset means
+    // logs are kept forever, which is both a cost and a privacy leak.
+    retention: '1 month',
+  },
 });

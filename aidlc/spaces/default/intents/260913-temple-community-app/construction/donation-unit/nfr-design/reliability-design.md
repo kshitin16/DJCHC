@@ -22,6 +22,15 @@ Failover: none — no secondary aggregator, matching this project's single-aggre
 
 DynamoDB's standard managed replication plus NFR4's encryption-at-rest. As noted in NFR Requirements, DynamoDB point-in-time recovery (PITR) is recommended for this table given the financial-record stakes — this design stage restates that recommendation as an Infrastructure Design action item (PITR is a table-configuration setting, not something this stage decides the mechanism for).
 
+> **Decided 2026-10-01 at Incident Response (Q4), then carried here when that
+> stage reported skipped.** Bounded automatic retry is adopted: the reconciler
+> keeps retrying a PENDING Donation across cycles up to a fixed cap before it
+> gives up and publishes to `donation-reconciliation-alerts`. The cap is what
+> stops a permanently unresolvable Donation from retrying forever, and the SNS
+> alert still fires when the cap is reached, so automation never silently
+> absorbs a real failure. Not yet implemented — this is a code change to the
+> reconciler, recorded as a decision rather than as done.
+
 ## Alerting reliability (NFR-OBS.4, Q3)
 
 The SNS topic + email subscription is itself the reliability mechanism for surfacing a reconciliation failure — no additional retry/escalation logic is designed (SNS's own delivery retry to the email endpoint is sufficient at this app's single-recipient, low-volume alerting need).

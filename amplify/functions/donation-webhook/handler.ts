@@ -10,8 +10,10 @@
  *   4. direct GetItem on `payload.order_id` (= `Donation.id`; review R-02 —
  *      never a lookup by `payment_id`) → 404 + log when absent, never guessed
  *   5. one atomic conditional UpdateItem (`applySettlement`, BR5.5/NFR5.2):
- *      200 whether the settlement was applied or this `payment_id` was a
- *      duplicate delivery
+ *      200 whether the settlement was applied, this `payment_id` was a
+ *      duplicate delivery, or the donation had already reached a terminal
+ *      status and must not be rewritten (revision 1, review F-1) — a 200 is
+ *      what stops the aggregator retrying a delivery we will never accept
  *
  * Authentication note (project.md Correction — say which layer enforces it):
  * the Function URL itself is public (auth NONE, attached in `backend.ts`);
@@ -120,12 +122,28 @@ export function createHandler(deps: DonationWebhookDeps) {
       // 5. Atomic, idempotent settlement.
       const status = settlementForEvent(parsed.event);
       const result = await deps.repository.applySettlement(donation.id, status, parsed.paymentId);
-      logger.info(result.applied ? 'Settlement applied' : 'Duplicate webhook ignored', {
+      // A rejected conditional write is a clean, logged no-op, never an
+      // exception (revision 1, reviews F-1/F-5): either this `payment_id` was
+      // already processed (a redelivery) or the row had already reached a
+      // terminal status, and in both cases the correct answer to the aggregator
+      // is 200 so it stops retrying.
+      logger.info(
+        result.applied
+          ? 'Settlement applied'
+          : 'Settlement rejected; donation already terminal or this payment was already processed — no state change',
+        {
+          donationId: donation.id,
+          status,
+          applied: result.applied,
+          ...(result.currentStatus ? { currentStatus: result.currentStatus } : {}),
+        },
+      );
+      return respond(200, {
         donationId: donation.id,
         status,
         applied: result.applied,
+        ...(result.currentStatus ? { currentStatus: result.currentStatus } : {}),
       });
-      return respond(200, { donationId: donation.id, status, applied: result.applied });
     } catch (error) {
       logger.error('Webhook processing failed; aggregator may retry', {
         orderId: parsed.orderId,
