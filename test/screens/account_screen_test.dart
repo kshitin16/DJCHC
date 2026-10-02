@@ -83,9 +83,7 @@ void main() {
       // Google does not guarantee `family_name`. An account whose name is one
       // word sends `given_name` alone, and joining blindly would render
       // "Kshitindra " or "Kshitindra null".
-      authGateway.setSession(
-        aSession(signedIn: true, givenName: 'Kshitindra'),
-      );
+      authGateway.setSession(aSession(signedIn: true, givenName: 'Kshitindra'));
       await authState.refresh();
       await pumpAppAndSettle(tester, screen(), strings: strings);
 

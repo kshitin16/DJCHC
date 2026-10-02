@@ -155,16 +155,15 @@ class SessionInfo {
       listEquals(other.groups, groups);
 
   @override
-  int get hashCode =>
-      Object.hash(
-        isSignedIn,
-        sub,
-        email,
-        givenName,
-        familyName,
-        identityId,
-        Object.hashAll(groups),
-      );
+  int get hashCode => Object.hash(
+    isSignedIn,
+    sub,
+    email,
+    givenName,
+    familyName,
+    identityId,
+    Object.hashAll(groups),
+  );
 }
 
 /// A change in sign-in state, surfaced from Amplify's Hub.
