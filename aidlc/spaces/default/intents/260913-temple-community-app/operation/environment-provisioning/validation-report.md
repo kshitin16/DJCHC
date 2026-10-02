@@ -26,10 +26,38 @@ surface already.
 | S-4 | The `appsync:GraphQL` grant is field-scoped | The Code Generation narrowing survived deployment | Not run |
 | S-5 | Cognito self-sign-up disabled | `allowAdminCreateUserOnly: true` | Not run |
 | S-6 | User Pool Client has no secret | Public client, as designed for a mobile app | Not run |
-| S-7 | `Admin` group exists and is enforced server-side | A non-admin is refused by the API, not just by a hidden screen | Not run |
+| S-7 | `Admin` group exists and is enforced server-side | A non-admin is refused by the API, not just by a hidden screen | **PASS — 2026-10-02** |
 | S-8 | Secrets resolve from SSM, absent from source | No literal credential anywhere in the repo | Not run |
 | S-9 | DynamoDB encryption at rest active | AWS-owned keys (Q2) | Not run |
 | S-10 | TLS enforced on all endpoints | No plaintext path | Not run |
+
+> **S-7 PASSED, 2026-10-02 — the first time this boundary has ever been tested.**
+>
+> Run against the deployed `all-suggestions` Lambda in the sandbox, both
+> directions, because a refusal proves nothing unless the permitted case is
+> permitted:
+>
+> | Identity | Result |
+> |---|---|
+> | `groups: ["Admin"]` | `200`, returns `[]` — allowed |
+> | `groups: []` | `SuggestionAuthorizationError: "Only an admin can view all suggestions"` |
+>
+> `allSuggestions` was chosen deliberately as the target. It is one of the three
+> operations that is NOT group-gated at the AppSync layer — Amplify silently
+> drops `allow.group('Admin')` for Lambda-backed operations (see
+> `amplify/data/resource.ts`) — so `requireAdmin` inside the Lambda is its only
+> defence, and it returns every suggestion-box submission in the app. If the
+> boundary were going to fail anywhere, it would fail here.
+>
+> This closes what `team.md` Q5 recorded as a deliberate deferral: the builder
+> chose a smoke-level bar for the admin gate at the walking skeleton, with a
+> real pass/fail assertion expected later. This is that assertion, and it was
+> made against deployed code rather than a mock.
+>
+> Still not covered: the same check on `listAllPostsForAdmin` and
+> `confirmDocumentUpload`, the other two operations in the same position.
+> `confirmDocumentUpload` now has a unit test for it; neither has been
+> exercised against a deployed environment.
 
 **S-7 is the one to run first among these.** The admin allowlist is the project's
 only privilege boundary, and `team.md` records a deliberate choice to hold the
