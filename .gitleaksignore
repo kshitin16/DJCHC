@@ -31,3 +31,34 @@ aidlc/spaces/default/intents/260913-temple-community-app/construction/auth-unit/
 # firebase_messaging package's own bundled example app, not this project's.
 build/ios/SourcePackages/firebase_messaging-16.7.0/example/bundled-service-worker/firebase-messaging-sw.ts:gcp-api-key:33
 build/ios/SourcePackages/firebase_messaging-16.7.0/example/web/firebase-messaging-sw.js:gcp-api-key:17
+
+# Firebase client configuration — REVIEWED AND RESTRICTED 2026-10-02.
+#
+# `android/app/google-services.json` and `ios/Runner/GoogleService-Info.plist`
+# each carry a Google API key (`AIza...`). Both were reviewed against the rule
+# at the top of this file before being allowlisted.
+#
+# Why these are not secrets: the keys are compiled into every APK and IPA that
+# ships, so anyone who installs the app can extract them. Keeping them out of
+# git protects nothing, because distribution publishes them regardless, and
+# Google documents both files as safe to commit. Omitting them would instead
+# break the build for any future contributor and silently disable Firebase via
+# the conditional in android/app/build.gradle.kts.
+#
+# Why that alone was NOT considered sufficient: an UNRESTRICTED Google API key
+# can call any API enabled on the project, and this Firebase project shares its
+# GCP project with the Google OAuth client. An extracted key could burn quota
+# or spend against a personally-funded account. So before allowlisting, both
+# keys were given application restrictions in the Google Cloud Console —
+# Android bound to package `in.sarovarjinalaya.app` plus the signing SHA-1,
+# iOS bound to bundle id `in.sarovarjinalaya.app` — which makes an extracted
+# copy unusable from anywhere else. That restriction, not this allowlist, is
+# the actual mitigation.
+#
+# OUTSTANDING: the Android restriction currently covers only the DEBUG signing
+# certificate (SHA-1 11:21:BC:9B:F1:FA:9C:D1:98:15:5A:2E:D6:22:52:14:36:1C:59:BB).
+# When the Android upload keystore is created for a real release, that build is
+# signed with a different key and WILL be blocked until its SHA-1 is added
+# here too. This is the kind of restriction that works in testing and fails on
+# the first Play Store build.
+android/app/google-services.json:gcp-api-key:23
