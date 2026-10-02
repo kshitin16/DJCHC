@@ -137,12 +137,53 @@ that data by accident.
 
 | # | Check | Expected | Status |
 |---|---|---|---|
-| B-1 | Tripwire budget exists | Monthly, low fixed threshold, email alert | Not run |
-| B-2 | Target budget exists | Alerts at 80% and 100% | Not run |
-| B-3 | Cost Anomaly Detection monitor active | AWS-wide, email alerts | Not run |
-| B-4 | Action-enabled budget configured | Deny policy at threshold, scoped to block new resource creation only | Not run |
-| B-5 | The action does not break the running app | Verify the deny policy's scope before arming it | Not run |
+| B-1 | Tripwire budget exists | Monthly, low fixed threshold, email alert | **PASS — 2026-10-02**, `Monthly AWS Budget` at $7: 80% actual, 100% actual, 80% forecasted |
+| B-2 | Target budget exists | Alerts at 80% and 100% | **PASS — 2026-10-02**, `temple-app-ceiling` at $10: 80%, 100%, 100% forecasted |
+| B-3 | Cost Anomaly Detection monitor active | AWS-wide, email alerts | **PASS — 2026-10-02**, SERVICE-dimension monitor, daily, $2 impact threshold |
+| B-4 | Action-enabled budget configured | ~~Deny policy at threshold, scoped to block new resource creation only~~ **Superseded — see below** | **PASS — 2026-10-02**, `temple-app-hard-cap` at $15, armed, `STANDBY` |
+| B-5 | The action does not break the running app | ~~Verify the deny policy's scope before arming it~~ **Reversed by the builder — see below** | **N/A by decision** |
 | B-6 | CloudWatch log retention set on every group | 30 days | Not run |
+
+### The spend cap deliberately DOES break the running app (reversed 2026-10-02)
+
+This stage originally specified an action budget "scoped to deny the *creation*
+of new resources, not to break the running application", and `project.md`
+recorded the reasoning as a practice: *"A guardrail must not break the thing it
+protects... a cost control that takes the temple's app offline to save a small
+sum inverts the priority it exists to serve."*
+
+**The builder reversed that priority when the cap was actually built**, and the
+reasoning is recorded here rather than left as two contradictory rules:
+
+> "This is personally funded project and it is not critical at all. So even if
+> the app is down for a day or two it doesn't matter."
+
+That is a coherent position for a volunteer-funded community app with no users
+yet, and it is the builder's money. B-5 is therefore **N/A by decision**, not
+unmet: the cap is *intended* to take the app offline.
+
+**What is armed** (`temple-app-hard-cap`, $15, 100% actual, AUTOMATIC):
+attaches `temple-app-spend-cap-strict` to the IAM user `Kshitindra` and to all
+**11 app Lambda execution roles**. The app stops working when it fires.
+
+**Two things were deliberately excluded from the deny, and both matter:**
+
+1. **The Amplify/CDK infrastructure roles** (`AmplifyManagedTable*`,
+   `AmplifySecretFetcher*`, `CustomS3AutoDelete*`, `CustomCDKBucketDeployment*`)
+   are NOT in the action. Denying them risks wedging CloudFormation mid-
+   operation — the precise state that cost an hour and a full sandbox rebuild
+   on 2026-10-01. A stuck stack makes recovery harder, not cheaper.
+
+2. **The policy is a `Deny` with `NotAction`**, not a blanket deny-all. It
+   permits `budgets:*`, `ce:*`, `iam:Detach*Policy`, `iam:List*`,
+   `sts:GetCallerIdentity` and `support:*` — the minimum needed to lift the cap.
+   A literal deny-all would have locked the builder out of removing their own
+   cap, forcing a root-account login to recover.
+
+**Two limitations to understand before relying on it:**
+
+- **Lambda invocation charges still accrue.** Denying an execution role stops the downstream work (DynamoDB, external calls), not the invocations. Against the retry-loop runaway this project's own inventory predicts as most likely, the cap slows the bleeding rather than stopping it.
+- **The 11 role names are sandbox-specific.** Every `ampx sandbox` rebuild regenerates them with new random suffixes. After any rebuild the action references roles that no longer exist and silently degrades to covering the IAM user alone. **Re-point it after each rebuild**, and re-point it properly once the permanent Amplify app exists, where role names are stable.
 
 **B-5 before B-4 is armed.** An action-enabled budget that denies too broadly would
 take the temple's app offline to save a small amount of money. Read the policy's
