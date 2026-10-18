@@ -143,7 +143,8 @@ and it is the main cost of the Q1 choice.
 | IT-1, signed-in reminder authorization | Predicted to fail; one sandbox sign-in settles it |
 | 25 `Unverified` targets | Most convert at the first sandbox deploy |
 | Payment aggregator account absent | Donations stay flag-gated off |
-| Firebase project not created | No push, no crash reporting |
+| ~~Firebase project not created~~ **Done 2026-10-02** | ~~No push, no crash reporting~~ Project created, both config files in place, Crashlytics live on both platforms |
+| **iOS push blocked on an APNs key** — *confirmed on device 2026-10-18* | Opening Calendar on a real iPhone with notifications ALLOWED still reports "Notifications are turned off for this app". FCM cannot obtain a token on iOS without an APNs authentication key, and creating one requires the paid Apple Developer Program. Not a defect: the screen degrades exactly as designed and browsing still works. Android is unaffected and needs no further setup |
 | Google OAuth credentials not registered | No sign-in at all |
 | Accessibility (NFR7) | Unbuilt, unowned, no gate |
 
