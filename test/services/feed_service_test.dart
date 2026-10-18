@@ -131,8 +131,15 @@ void main() {
         'description': 'Contributions welcome.',
         'dateTime': '2026-05-01T03:30:00.000Z',
       });
-      // The input type name is the schema's customType key, not `CreatePostInput`.
-      expect(call.document, contains(r'$input: CreatePost!'));
+      // The variable type is the GENERATED INPUT type, `CreatePostInput!` —
+      // not the schema's customType key `CreatePost`. This assertion
+      // previously demanded `CreatePost!` and so locked in a defect: AppSync
+      // rejected every createPost with `NonInputTypeOnVariable`, because
+      // `CreatePost` is a real type in the schema but an output type, not an
+      // input one. The test passed throughout; it was asserting what the code
+      // did rather than what the contract requires. Confirmed against the
+      // deployed SDL: `createPost(input: CreatePostInput!): Post!`.
+      expect(call.document, contains(r'$input: CreatePostInput!'));
       expect(created.id, 'new-1');
     },
   );

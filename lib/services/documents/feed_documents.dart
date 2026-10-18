@@ -50,20 +50,20 @@ $postFields
   }
 }''';
 
-/// `createPost(input: CreatePost!)`.
+/// `createPost(input: CreatePostInput!)`.
 const String createPostDocument =
     '''
-mutation CreatePost(\$input: CreatePost!) {
+mutation CreatePost(\$input: CreatePostInput!) {
   createPost(input: \$input) {
 $postFields
   }
 }''';
 
-/// `updatePost(id: ID!, input: UpdatePost!)` — every input field is optional;
+/// `updatePost(id: ID!, input: UpdatePostInput!)` — every input field is optional;
 /// only the ones the admin actually changed are sent.
 const String updatePostDocument =
     '''
-mutation UpdatePost(\$id: ID!, \$input: UpdatePost!) {
+mutation UpdatePost(\$id: ID!, \$input: UpdatePostInput!) {
   updatePost(id: \$id, input: \$input) {
 $postFields
   }
