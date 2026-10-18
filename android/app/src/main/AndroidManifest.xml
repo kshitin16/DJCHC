@@ -14,7 +14,6 @@
             android:name=".MainActivity"
             android:exported="true"
             android:launchMode="singleTop"
-            android:taskAffinity=""
             android:theme="@style/LaunchTheme"
             android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode"
             android:hardwareAccelerated="true"
@@ -31,17 +30,25 @@
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
-        </activity>
 
-        <!-- Cognito hosted-UI (Google federation, Contract 1) returns to the app
-             through the custom scheme `sarovarjinalaya` — callback
-             `sarovarjinalaya://callback/` and sign-out `sarovarjinalaya://signout/`.
-             auth-unit registers the same two URLs on the public Cognito App
-             Client (infrastructure-specification.md, Shared Infrastructure);
-             both halves must change together. -->
-        <activity
-            android:name="com.amplifyframework.auth.cognito.activities.HostedUIRedirectActivity"
-            android:exported="true">
+            <!-- Cognito hosted-UI (Google federation, Contract 1) returns to the
+                 app through the custom scheme `sarovarjinalaya` - callback
+                 `sarovarjinalaya://callback/` and sign-out
+                 `sarovarjinalaya://signout/`. auth-unit registers the same two
+                 URLs on the public Cognito App Client
+                 (infrastructure-specification.md, Shared Infrastructure); both
+                 halves must change together.
+
+                 This filter belongs on MainActivity, which is what
+                 amplify_auth_cognito's own reference app does. An earlier
+                 version instead declared a separate
+                 `com.amplifyframework.auth.cognito.activities.HostedUIRedirectActivity`,
+                 a class that exists in the Amplify ANDROID (native) SDK and is
+                 NOT shipped by the Flutter plugin - it appeared zero times in
+                 the built APK's dex. Android could not start it, so sign-in
+                 authenticated at Google, created the Cognito user, then hung
+                 forever on the redirect with the Custom Tab still open.
+                 Confirmed against the shipped binary, 2026-10-18. -->
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
