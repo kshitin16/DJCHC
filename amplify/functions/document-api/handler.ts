@@ -212,7 +212,7 @@ export function createHandler(deps: DocumentApiDeps) {
 
   return async (event: DocumentApiEvent): Promise<DocumentApiResult> => {
     const args = event.arguments ?? {};
-    switch (event.info.fieldName) {
+    switch (resolvedFieldName(event)) {
       case 'listDocuments':
         return listDocuments(args);
       case 'getDocumentDownloadUrl':
@@ -226,7 +226,7 @@ export function createHandler(deps: DocumentApiDeps) {
         requireAdmin(event);
         return deleteDocument(args);
       default:
-        throw new Error(`document-api: unsupported operation ${event.info.fieldName}`);
+        throw new Error(`document-api: unsupported operation ${resolvedFieldName(event)}`);
     }
   };
 }
@@ -248,3 +248,30 @@ function realDependencies(): DocumentApiDeps {
 
 export const handler = async (event: DocumentApiEvent): Promise<DocumentApiResult> =>
   createHandler(realDependencies())(event);
+
+
+/**
+ * The GraphQL field being resolved, read from EITHER payload shape.
+ *
+ * Amplify Gen2's generated resolver does NOT send AppSync's documented context
+ * object. Its request template builds a FLAT payload:
+ *
+ *   { typeName, fieldName, arguments, identity, source, request, prev }
+ *
+ * so there is no `info` and `event.info.fieldName` throws
+ * "Cannot read properties of undefined (reading 'fieldName')" on the first
+ * line of dispatch. Every Lambda-backed operation in this app was broken this
+ * way - the feed, the document library, suggestions, reminders and donations -
+ * and none of the unit tests caught it, because they construct events in the
+ * DOCUMENTED nested shape rather than the one Amplify actually delivers.
+ *
+ * Both shapes are accepted: the flat one is production, the nested one keeps
+ * the existing tests meaningful and matches AppSync's own direct-resolver
+ * format, which this could be switched to later.
+ *
+ * Verified against the deployed request mapping template, 2026-10-18.
+ */
+function resolvedFieldName(event: unknown): string {
+  const e = event as { info?: { fieldName?: string }; fieldName?: string };
+  return e.info?.fieldName ?? e.fieldName ?? '';
+}

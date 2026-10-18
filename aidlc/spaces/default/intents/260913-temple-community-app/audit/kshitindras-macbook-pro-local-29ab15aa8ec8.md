@@ -59169,3 +59169,193 @@
 **Session**: 09aed56d-6230-4346-b93a-0ec0b645d568
 
 ---
+
+## Human Turn
+**Timestamp**: 2026-10-02T03:08:01Z
+**Event**: HUMAN_TURN
+**Session**: 09aed56d-6230-4346-b93a-0ec0b645d568
+
+---
+
+## Human Turn
+**Timestamp**: 2026-10-02T03:08:08Z
+**Event**: HUMAN_TURN
+**Session**: 09aed56d-6230-4346-b93a-0ec0b645d568
+
+---
+
+## Human Turn
+**Timestamp**: 2026-10-02T03:09:06Z
+**Event**: HUMAN_TURN
+**Session**: 09aed56d-6230-4346-b93a-0ec0b645d568
+
+---
+
+## Human Turn
+**Timestamp**: 2026-10-02T03:10:45Z
+**Event**: HUMAN_TURN
+**Session**: 09aed56d-6230-4346-b93a-0ec0b645d568
+
+---
+
+## Human Turn
+**Timestamp**: 2026-10-02T03:11:18Z
+**Event**: HUMAN_TURN
+**Session**: 09aed56d-6230-4346-b93a-0ec0b645d568
+
+---
+
+## Human Turn
+**Timestamp**: 2026-10-02T03:12:07Z
+**Event**: HUMAN_TURN
+**Session**: 09aed56d-6230-4346-b93a-0ec0b645d568
+
+---
+
+## Human Turn
+**Timestamp**: 2026-10-02T03:12:19Z
+**Event**: HUMAN_TURN
+**Session**: 09aed56d-6230-4346-b93a-0ec0b645d568
+
+---
+
+## Human Turn
+**Timestamp**: 2026-10-02T03:12:20Z
+**Event**: HUMAN_TURN
+**Session**: 09aed56d-6230-4346-b93a-0ec0b645d568
+
+---
+
+## Human Turn
+**Timestamp**: 2026-10-02T03:15:02Z
+**Event**: HUMAN_TURN
+**Session**: 09aed56d-6230-4346-b93a-0ec0b645d568
+
+---
+
+## Human Turn
+**Timestamp**: 2026-10-02T03:16:13Z
+**Event**: HUMAN_TURN
+**Session**: 09aed56d-6230-4346-b93a-0ec0b645d568
+
+---
+
+## Human Turn
+**Timestamp**: 2026-10-02T03:19:08Z
+**Event**: HUMAN_TURN
+**Session**: 09aed56d-6230-4346-b93a-0ec0b645d568
+
+---
+
+## Human Turn
+**Timestamp**: 2026-10-02T05:14:50Z
+**Event**: HUMAN_TURN
+**Session**: 09aed56d-6230-4346-b93a-0ec0b645d568
+
+---
+
+## Human Turn
+**Timestamp**: 2026-10-02T05:16:08Z
+**Event**: HUMAN_TURN
+**Session**: 09aed56d-6230-4346-b93a-0ec0b645d568
+
+---
+
+## Human Turn
+**Timestamp**: 2026-10-05T23:13:07Z
+**Event**: HUMAN_TURN
+**Session**: 09aed56d-6230-4346-b93a-0ec0b645d568
+
+---
+
+## Human Turn
+**Timestamp**: 2026-10-06T00:49:46Z
+**Event**: HUMAN_TURN
+**Session**: 09aed56d-6230-4346-b93a-0ec0b645d568
+
+---
+
+## Human Turn
+**Timestamp**: 2026-10-06T01:26:46Z
+**Event**: HUMAN_TURN
+**Session**: 09aed56d-6230-4346-b93a-0ec0b645d568
+
+---
+
+## Human Turn
+**Timestamp**: 2026-10-06T01:27:19Z
+**Event**: HUMAN_TURN
+**Session**: 09aed56d-6230-4346-b93a-0ec0b645d568
+
+---
+
+## Human Turn
+**Timestamp**: 2026-10-18T06:36:23Z
+**Event**: HUMAN_TURN
+**Session**: 09aed56d-6230-4346-b93a-0ec0b645d568
+
+---
+
+## Human Turn
+**Timestamp**: 2026-10-18T06:37:21Z
+**Event**: HUMAN_TURN
+**Session**: 09aed56d-6230-4346-b93a-0ec0b645d568
+
+---
+
+## Human Turn
+**Timestamp**: 2026-10-18T06:57:40Z
+**Event**: HUMAN_TURN
+**Session**: 09aed56d-6230-4346-b93a-0ec0b645d568
+
+---
+
+## Human Turn
+**Timestamp**: 2026-10-18T07:01:24Z
+**Event**: HUMAN_TURN
+**Session**: 09aed56d-6230-4346-b93a-0ec0b645d568
+
+---
+
+## Human Turn
+**Timestamp**: 2026-10-18T07:08:23Z
+**Event**: HUMAN_TURN
+**Session**: 09aed56d-6230-4346-b93a-0ec0b645d568
+
+---
+
+## Human Turn
+**Timestamp**: 2026-10-18T07:10:54Z
+**Event**: HUMAN_TURN
+**Session**: 09aed56d-6230-4346-b93a-0ec0b645d568
+
+---
+
+## Human Turn
+**Timestamp**: 2026-10-18T07:11:33Z
+**Event**: HUMAN_TURN
+**Session**: 09aed56d-6230-4346-b93a-0ec0b645d568
+
+---
+
+## Session Compacted
+**Timestamp**: 2026-10-18T07:11:48Z
+**Event**: SESSION_COMPACTED
+**Current Stage**: performance-validation
+**State Validity**: valid
+
+---
+
+## Human Turn
+**Timestamp**: 2026-10-18T07:16:13Z
+**Event**: HUMAN_TURN
+**Session**: 09aed56d-6230-4346-b93a-0ec0b645d568
+
+---
+
+## Human Turn
+**Timestamp**: 2026-10-18T07:22:34Z
+**Event**: HUMAN_TURN
+**Session**: 09aed56d-6230-4346-b93a-0ec0b645d568
+
+---

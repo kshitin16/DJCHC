@@ -148,23 +148,43 @@ class _PostFormScreenState extends State<PostFormScreen> {
     }
   }
 
-  Future<void> _pickDate() async {
+  /// Picks the event's date AND its time of day, in that order.
+  ///
+  /// The time half is not optional decoration. FR2.1 requires a post to carry
+  /// a date/time, and FR7.6 schedules a reminder's auto-clear against that
+  /// exact timestamp — so an event whose time defaults to whenever the admin
+  /// happened to open the form gets a reminder keyed to the wrong moment.
+  /// An earlier version of this screen offered only the date picker and
+  /// silently kept the current time of day, which is how that shipped.
+  ///
+  /// Cancelling the date picker leaves the value untouched. Cancelling only
+  /// the time picker keeps the newly chosen date with the previous time,
+  /// rather than discarding the date the admin just selected.
+  Future<void> _pickDateTime() async {
     final ist = toIst(_dateTime);
-    final picked = await showDatePicker(
+    final pickedDate = await showDatePicker(
       context: context,
       initialDate: DateTime(ist.year, ist.month, ist.day),
       firstDate: DateTime(2020),
       lastDate: DateTime(2040),
     );
-    if (picked == null || !mounted) return;
-    // Keep the existing IST time-of-day and move only the date.
+    if (pickedDate == null || !mounted) return;
+
+    final pickedTime = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay(hour: ist.hour, minute: ist.minute),
+    );
+    if (!mounted) return;
+
+    // Everything the pickers return is IST wall-clock; the stored value is
+    // UTC, so build the IST instant and shift it back.
     setState(() {
       _dateTime = DateTime.utc(
-        picked.year,
-        picked.month,
-        picked.day,
-        ist.hour,
-        ist.minute,
+        pickedDate.year,
+        pickedDate.month,
+        pickedDate.day,
+        pickedTime?.hour ?? ist.hour,
+        pickedTime?.minute ?? ist.minute,
       ).subtract(istOffset);
     });
   }
@@ -240,7 +260,7 @@ class _PostFormScreenState extends State<PostFormScreen> {
                   title: Text(strings.t('postForm.dateTime')),
                   subtitle: Text(formatIstDateTime(_dateTime)),
                   trailing: const Icon(Icons.edit_calendar_outlined),
-                  onTap: _pickDate,
+                  onTap: _pickDateTime,
                 ),
                 const SizedBox(height: 24),
                 FilledButton(

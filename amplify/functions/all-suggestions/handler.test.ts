@@ -52,7 +52,42 @@ function handlerOver(rows: SuggestionRecord[]) {
   return { handler, calls: () => listAllCalls };
 }
 
+/**
+ * The payload Amplify's generated resolver ACTUALLY sends: flat, with
+ * `fieldName` at the top level and no `info` object at all. Confirmed against
+ * the deployed request mapping template on 2026-10-18.
+ *
+ * The nested `event()` helper above models AppSync's DOCUMENTED context, which
+ * is what every handler test in this repo used - and why a production-breaking
+ * bug sat undetected behind 285 passing tests. Every Lambda-backed operation
+ * in the app threw "Cannot read properties of undefined (reading 'fieldName')"
+ * on its first line of dispatch.
+ */
+function flatEvent(identity: unknown, fieldName = 'allSuggestions'): AllSuggestionsEvent {
+  return {
+    typeName: 'Query',
+    fieldName,
+    arguments: {},
+    identity,
+    source: null,
+    request: { headers: {}, domainName: null },
+    prev: null,
+  } as unknown as AllSuggestionsEvent;
+}
+
 describe('suggestion-unit: all-suggestions Lambda', () => {
+  it('works with the FLAT payload Amplify actually sends, not just the documented nested one', async () => {
+    const { handler } = handlerOver([]);
+
+    // Admin, flat shape: must resolve, not throw on a missing `info`.
+    await expect(handler(flatEvent({ sub: 'a', groups: ['Admin'] }))).resolves.toEqual([]);
+
+    // And the admin gate still holds on this shape.
+    await expect(
+      handler(flatEvent({ sub: 'b', groups: [] })),
+    ).rejects.toBeInstanceOf(SuggestionAuthorizationError);
+  });
+
   it('refuses a non-admin, an anonymous caller and a wrong operation without touching the table (BR3.3 backstop)', async () => {
     const { handler, calls } = handlerOver([aSuggestion('a', '2026-09-19T10:00:00.000Z')]);
     await expect(handler(event({ sub: 'user-sub', groups: null }))).rejects.toBeInstanceOf(

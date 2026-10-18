@@ -60,6 +60,36 @@ void main() {
     );
   });
 
+  testWidgets(
+    'the date/time field offers a TIME picker after the date picker (FR2.1)',
+    (tester) async {
+      // Regression guard. The form shipped with showDatePicker only, keeping
+      // whatever time of day the admin happened to open it at. FR2.1 requires
+      // a post to carry a date/time, and FR7.6 schedules a reminder's
+      // auto-clear against that exact timestamp - so a wrong time of day is a
+      // wrong reminder, not a cosmetic issue. Nothing caught it because this
+      // form had no test that touched the field at all.
+      feed.adminPosts = [aPost()];
+      feed.post = aPost(id: 'created');
+
+      await pumpAppAndSettle(tester, screen());
+      await tester.tap(find.byKey(AdminPostListScreen.newPostKey));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byKey(const ValueKey('postForm.dateTime')));
+      await tester.pumpAndSettle();
+
+      // The date picker opens first.
+      expect(find.byType(DatePickerDialog), findsOneWidget);
+      await tester.tap(find.text('OK'));
+      await tester.pumpAndSettle();
+
+      // ...and a time picker MUST follow it. Before the fix this found
+      // nothing and the dialog chain simply ended at the date.
+      expect(find.byType(TimePickerDialog), findsOneWidget);
+    },
+  );
+
   testWidgets('New Post opens the create form, which calls createPost', (
     tester,
   ) async {
